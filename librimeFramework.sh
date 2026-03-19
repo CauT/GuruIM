@@ -11,10 +11,19 @@ OUTPUT="${PWD}/Frameworks"
 # fi
 
 # 下载依赖的 librime framework
-LibrimeKitVersion="2.4.2"
 mkdir -p $OUTPUT
 rm -rf $OUTPUT/*.xcframwork && (
-  curl -OL https://github.com/imfuxiao/LibrimeKit/releases/download/${LibrimeKitVersion}/Frameworks.tgz
+  # 获取最新 release 的下载 URL
+  DOWNLOAD_URL=$(curl -s https://api.github.com/repos/imfuxiao/LibrimeKit/releases/latest | grep 'browser_download_url.*Frameworks.tgz' | cut -d'"' -f4)
+
+  if [ -z "$DOWNLOAD_URL" ]; then
+    echo "Failed to get download URL from GitHub API, trying fallback..."
+    # 备用方案：使用最新的 release
+    curl -OL https://github.com/imfuxiao/LibrimeKit/releases/latest/download/Frameworks.tgz
+  else
+    curl -OL "$DOWNLOAD_URL"
+  fi
+
   tar -zxf Frameworks.tgz -C ${OUTPUT}/..
   rm -rf Frameworks.tgz
 )
