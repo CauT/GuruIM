@@ -417,7 +417,38 @@ static RimeLeversApi *get_levers() {
 }
 
 - (BOOL)replaceInputKeys:(NSString *)keys withStartPos:(int)pos AndCount:(int)length AndSession:(RimeSessionId)session {
-  return RimeReplaceInput(session, pos, length, [keys UTF8String]);
+  // Alternative implementation since RimeReplaceInput is not available in librime 1.8.5
+  // Use the RimeApi struct to access get_input function
+
+  RimeApi* api = rime_get_api();
+  if (!api || !RIME_API_AVAILABLE(api, get_input)) {
+    // Fallback: if get_input is not available, return False
+    return False;
+  }
+
+  const char* current_input = api->get_input(session);
+  if (!current_input) {
+    return False;
+  }
+
+  NSString* currentInputStr = [NSString stringWithUTF8String:current_input];
+  size_t input_len = currentInputStr.length;
+
+  // Bounds check
+  if (pos < 0 || pos > (int)input_len || pos + length > (int)input_len) {
+    return False;
+  }
+
+  // Reconstruct the input string with replacement
+  NSString* beforePart = [currentInputStr substringToIndex:pos];
+  NSString* afterPart = [currentInputStr substringFromIndex:pos + length];
+  NSString* newInput = [NSString stringWithFormat:@"%@%@%@", beforePart, keys, afterPart];
+
+  // Clear the current composition
+  RimeClearComposition(session);
+
+  // Re-simulate the new input
+  return RimeSimulateKeySequence(session, [newInput UTF8String]);
 }
 
 - (NSArray<IRimeCandidate *> *)getCandidateList:(RimeSessionId)session {
