@@ -843,8 +843,19 @@ static RimeLeversApi *get_levers() {
 }
 
 - (NSString *) getStateLabelAbbreviated:(RimeSessionId) session optionName:(NSString *) option state:(BOOL)state abbreviated:(BOOL)abbreviated {
-  struct rime_string_slice_t stateLabel = rime_get_api()->get_state_label_abbreviated(session, [option UTF8String], state ? 1 : 0, abbreviated ? 1 : 0);
-  return stateLabel.str ? [NSString stringWithUTF8String: stateLabel.str] : @"";
+  RimeApi* api = rime_get_api();
+  // get_state_label_abbreviated was added after get_state_label; check data_size to ensure it's available.
+  ptrdiff_t offset = (char*)&api->get_state_label_abbreviated - (char*)&api->data_size;
+  if (offset < api->data_size && api->get_state_label_abbreviated) {
+    struct rime_string_slice_t stateLabel = api->get_state_label_abbreviated(session, [option UTF8String], state ? 1 : 0, abbreviated ? 1 : 0);
+    return stateLabel.str ? [NSString stringWithUTF8String: stateLabel.str] : @"";
+  }
+  // Fallback: use get_state_label (available in older librime)
+  if (api->get_state_label) {
+    const char* label = api->get_state_label(session, [option UTF8String], state ? 1 : 0);
+    return label ? [NSString stringWithUTF8String: label] : @"";
+  }
+  return @"";
 }
 
 @end

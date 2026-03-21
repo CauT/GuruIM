@@ -672,7 +672,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Hamster/Assets/Preview Content\"";
-				DEVELOPMENT_TEAM = 6S9WWJ83KY;
+				DEVELOPMENT_TEAM = 2E5A2Y6BLT;
 				ENABLE_BITCODE = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -693,7 +693,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 3.0.0;
-				OTHER_LDFLAGS = "";
+				OTHER_LDFLAGS = "-Xlinker -alias -Xlinker __ZN6google10LogMessageC1EPKciNS_11LogSeverityE -Xlinker __ZN6google10LogMessageC1EPKcii -Xlinker -alias -Xlinker __ZN6google10LogMessageC2EPKciNS_11LogSeverityE -Xlinker __ZN6google10LogMessageC2EPKcii -Xlinker -alias -Xlinker __ZN6google15LogMessageFatalC1EPKciRKNS_7logging8internal13CheckOpStringE -Xlinker __ZN6google15LogMessageFatalC1EPKciRKNS_13CheckOpStringE -Xlinker -alias -Xlinker __ZN6google15LogMessageFatalC2EPKciRKNS_7logging8internal13CheckOpStringE -Xlinker __ZN6google15LogMessageFatalC2EPKciRKNS_13CheckOpStringE -Xlinker -alias -Xlinker __ZN6google26GetExistingTempDirectoriesERNSt3__16vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE -Xlinker __ZN6google26GetExistingTempDirectoriesEPNSt3__16vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderC1EPKc -Xlinker __ZN6google4base21CheckOpMessageBuilderC1EPKc -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderC2EPKc -Xlinker __ZN6google4base21CheckOpMessageBuilderC2EPKc -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderD1Ev -Xlinker __ZN6google4base21CheckOpMessageBuilderD1Ev -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderD2Ev -Xlinker __ZN6google4base21CheckOpMessageBuilderD2Ev -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilder7ForVar2Ev -Xlinker __ZN6google4base21CheckOpMessageBuilder7ForVar2Ev -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilder9NewStringEv -Xlinker __ZN6google4base21CheckOpMessageBuilder9NewStringEv";
 				PRODUCT_BUNDLE_IDENTIFIER = com.donglingyong.Hamster;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRIP_STYLE = "non-global";
@@ -716,7 +716,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Hamster/Assets/Preview Content\"";
-				DEVELOPMENT_TEAM = 6S9WWJ83KY;
+				DEVELOPMENT_TEAM = 2E5A2Y6BLT;
 				ENABLE_BITCODE = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -737,7 +737,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 3.0.0;
-				OTHER_LDFLAGS = "";
+				OTHER_LDFLAGS = "-Xlinker -alias -Xlinker __ZN6google10LogMessageC1EPKciNS_11LogSeverityE -Xlinker __ZN6google10LogMessageC1EPKcii -Xlinker -alias -Xlinker __ZN6google10LogMessageC2EPKciNS_11LogSeverityE -Xlinker __ZN6google10LogMessageC2EPKcii -Xlinker -alias -Xlinker __ZN6google15LogMessageFatalC1EPKciRKNS_7logging8internal13CheckOpStringE -Xlinker __ZN6google15LogMessageFatalC1EPKciRKNS_13CheckOpStringE -Xlinker -alias -Xlinker __ZN6google15LogMessageFatalC2EPKciRKNS_7logging8internal13CheckOpStringE -Xlinker __ZN6google15LogMessageFatalC2EPKciRKNS_13CheckOpStringE -Xlinker -alias -Xlinker __ZN6google26GetExistingTempDirectoriesERNSt3__16vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE -Xlinker __ZN6google26GetExistingTempDirectoriesEPNSt3__16vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderC1EPKc -Xlinker __ZN6google4base21CheckOpMessageBuilderC1EPKc -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderC2EPKc -Xlinker __ZN6google4base21CheckOpMessageBuilderC2EPKc -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderD1Ev -Xlinker __ZN6google4base21CheckOpMessageBuilderD1Ev -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderD2Ev -Xlinker __ZN6google4base21CheckOpMessageBuilderD2Ev -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilder7ForVar2Ev -Xlinker __ZN6google4base21CheckOpMessageBuilder7ForVar2Ev -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilder9NewStringEv -Xlinker __ZN6google4base21CheckOpMessageBuilder9NewStringEv";
 				PRODUCT_BUNDLE_IDENTIFIER = com.donglingyong.Hamster;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRIP_STYLE = "non-global";
@@ -770,7 +770,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 3.0.0;
-				OTHER_LDFLAGS = "";
+				OTHER_LDFLAGS = "-Xlinker -alias -Xlinker __ZN6google10LogMessageC1EPKciNS_11LogSeverityE -Xlinker __ZN6google10LogMessageC1EPKcii -Xlinker -alias -Xlinker __ZN6google10LogMessageC2EPKciNS_11LogSeverityE -Xlinker __ZN6google10LogMessageC2EPKcii -Xlinker -alias -Xlinker __ZN6google15LogMessageFatalC1EPKciRKNS_7logging8internal13CheckOpStringE -Xlinker __ZN6google15LogMessageFatalC1EPKciRKNS_13CheckOpStringE -Xlinker -alias -Xlinker __ZN6google15LogMessageFatalC2EPKciRKNS_7logging8internal13CheckOpStringE -Xlinker __ZN6google15LogMessageFatalC2EPKciRKNS_13CheckOpStringE -Xlinker -alias -Xlinker __ZN6google26GetExistingTempDirectoriesERNSt3__16vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE -Xlinker __ZN6google26GetExistingTempDirectoriesEPNSt3__16vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderC1EPKc -Xlinker __ZN6google4base21CheckOpMessageBuilderC1EPKc -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderC2EPKc -Xlinker __ZN6google4base21CheckOpMessageBuilderC2EPKc -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderD1Ev -Xlinker __ZN6google4base21CheckOpMessageBuilderD1Ev -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderD2Ev -Xlinker __ZN6google4base21CheckOpMessageBuilderD2Ev -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilder7ForVar2Ev -Xlinker __ZN6google4base21CheckOpMessageBuilder7ForVar2Ev -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilder9NewStringEv -Xlinker __ZN6google4base21CheckOpMessageBuilder9NewStringEv";
 				PRODUCT_BUNDLE_IDENTIFIER = com.donglingyong.Hamster.HamsterKeyboard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -802,7 +802,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 3.0.0;
-				OTHER_LDFLAGS = "";
+				OTHER_LDFLAGS = "-Xlinker -alias -Xlinker __ZN6google10LogMessageC1EPKciNS_11LogSeverityE -Xlinker __ZN6google10LogMessageC1EPKcii -Xlinker -alias -Xlinker __ZN6google10LogMessageC2EPKciNS_11LogSeverityE -Xlinker __ZN6google10LogMessageC2EPKcii -Xlinker -alias -Xlinker __ZN6google15LogMessageFatalC1EPKciRKNS_7logging8internal13CheckOpStringE -Xlinker __ZN6google15LogMessageFatalC1EPKciRKNS_13CheckOpStringE -Xlinker -alias -Xlinker __ZN6google15LogMessageFatalC2EPKciRKNS_7logging8internal13CheckOpStringE -Xlinker __ZN6google15LogMessageFatalC2EPKciRKNS_13CheckOpStringE -Xlinker -alias -Xlinker __ZN6google26GetExistingTempDirectoriesERNSt3__16vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE -Xlinker __ZN6google26GetExistingTempDirectoriesEPNSt3__16vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderC1EPKc -Xlinker __ZN6google4base21CheckOpMessageBuilderC1EPKc -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderC2EPKc -Xlinker __ZN6google4base21CheckOpMessageBuilderC2EPKc -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderD1Ev -Xlinker __ZN6google4base21CheckOpMessageBuilderD1Ev -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilderD2Ev -Xlinker __ZN6google4base21CheckOpMessageBuilderD2Ev -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilder7ForVar2Ev -Xlinker __ZN6google4base21CheckOpMessageBuilder7ForVar2Ev -Xlinker -alias -Xlinker __ZN6google7logging8internal21CheckOpMessageBuilder9NewStringEv -Xlinker __ZN6google4base21CheckOpMessageBuilder9NewStringEv";
 				PRODUCT_BUNDLE_IDENTIFIER = com.donglingyong.Hamster.HamsterKeyboard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
