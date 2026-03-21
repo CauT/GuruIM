@@ -334,8 +334,8 @@ public extension RimeViewModel {
   static let rimeSyncConfigSample = """
   # id可以自定义，但不能其他终端定义的ID重复
   installation_id: "hamster"
-  # 仓的iOS中iCloud前缀路径固定为：/private/var/mobile/Library/Mobile Documents/iCloud~dev~fuxiao~app~hamsterapp/Documents
+  # 仓的iOS中iCloud前缀路径固定为：/private/var/mobile/Library/Mobile Documents/iCloud~com~desgemini~guru/Documents
   # iOS中的路径与MacOS及Windows的iCloud路径是不同的
-  sync_dir: "/private/var/mobile/Library/Mobile Documents/iCloud~dev~fuxiao~app~hamsterapp/Documents/sync"
+  sync_dir: "/private/var/mobile/Library/Mobile Documents/iCloud~com~desgemini~guru/Documents/sync"
   """
 }

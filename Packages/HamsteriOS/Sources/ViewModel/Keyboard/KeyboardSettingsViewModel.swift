@@ -1298,7 +1298,7 @@ extension KeyboardSettingsViewModel {
     await ProgressHUD.animate("导入中……", interaction: false)
     // 检测是否为iCloudURL, 需要特殊处理
     var needAccessingSecurity = false
-    if fileURL.path.contains("com~apple~CloudDocs") || fileURL.path.contains("iCloud~dev~fuxiao~app~hamsterapp") {
+    if fileURL.path.contains("com~apple~CloudDocs") || fileURL.path.contains("iCloud~com~desgemini~guru") {
       needAccessingSecurity = true
       // iCloud中的URL须添加安全访问资源语句，否则会异常：Operation not permitted
       // startAccessingSecurityScopedResource与stopAccessingSecurityScopedResource必须成对出现
