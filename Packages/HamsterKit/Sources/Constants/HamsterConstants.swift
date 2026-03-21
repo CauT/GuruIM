@@ -10,7 +10,7 @@ import Foundation
 /// Hamster 应用常量
 public enum HamsterConstants {
   /// AppGroup ID
-  public static let appGroupName = "group.dev.fuxiao.app.Hamster"
+  public static let appGroupName = "group.com.donglingyong.Hamster"
 
   /// iCloud ID
   public static let iCloudID = "iCloud.dev.fuxiao.app.hamsterapp"
