@@ -50,6 +50,10 @@ open class KeyboardInputViewController: UIInputViewController, KeyboardControlle
     setupRIME()
     viewWillSetupKeyboard()
     viewWillSyncWithContext()
+    // GURU: 每次键盘弹出开启新 session
+    guruBeginSession()
+    // 剪贴板：检查是否有新内容并记录
+    ClipboardMonitorService.shared.checkAndRecord()
 
     // fix: 屏幕边缘按键触摸延迟
     // https://stackoverflow.com/questions/39813245/touchesbeganwithevent-is-delayed-at-left-edge-of-screen
@@ -64,6 +68,12 @@ open class KeyboardInputViewController: UIInputViewController, KeyboardControlle
   override open func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
 //    viewWillHandleDictationResult()
+  }
+
+  override open func viewWillDisappear(_ animated: Bool) {
+    super.viewWillDisappear(animated)
+    // GURU: 键盘收起时保存本次 session
+    guruFinalizeSession()
   }
 
   override open func viewDidLayoutSubviews() {
@@ -477,8 +487,12 @@ open class KeyboardInputViewController: UIInputViewController, KeyboardControlle
       if keyboardContext.cursorBackOfSymbols(key: text) {
         self.textDocumentProxy.adjustTextPosition(byCharacterOffset: 1)
         self.textDocumentProxy.deleteBackward(times: 2)
+        // GURU: 成对符号删除 2 个字符
+        guruDeleteChars(2)
       } else {
         textDocumentProxy.deleteBackward(range: keyboardBehavior.backspaceRange)
+        // GURU: 删除 1 个字符
+        guruDeleteLastChar()
       }
       return
     }
@@ -501,6 +515,8 @@ open class KeyboardInputViewController: UIInputViewController, KeyboardControlle
 
   open func deleteBackward(times: Int) {
     textDocumentProxy.deleteBackward(times: times)
+    // GURU: 批量删除
+    guruDeleteChars(times)
   }
 
   open func insertSymbol(_ symbol: Symbol) {
@@ -535,6 +551,8 @@ open class KeyboardInputViewController: UIInputViewController, KeyboardControlle
   open func insertText(_ text: String) {
     if keyboardContext.keyboardType.isAlphabetic {
       textDocumentProxy.insertText(text)
+      // GURU: 记录直接输入的文本（英文字符、空格等）
+      guruAppendText(text)
       return
     }
 
@@ -979,6 +997,9 @@ private extension KeyboardInputViewController {
 
   /// 上屏补丁：增加了成对符号/光标回退/返回主键盘的支持
   func insertTextPatch(_ insertText: String) {
+    // GURU: 记录 RIME/符号上屏内容
+    guruAppendText(insertText)
+
     // 替换为成对符号
     let text = keyboardContext.getPairSymbols(insertText)
 
@@ -1008,6 +1029,172 @@ private extension KeyboardInputViewController {
       keyboardContext.setKeyboardType(keyboardContext.returnKeyboardType())
     }
   }
+}
+
+// MARK: - GURU 输入采集
+
+extension KeyboardInputViewController {
+  /// 本次 session 累积的完整文本
+  var guruTextBuffer: String {
+    get { objc_getAssociatedObject(self, &AssociatedKeys.textBuffer) as? String ?? "" }
+    set { objc_setAssociatedObject(self, &AssociatedKeys.textBuffer, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+  }
+
+  /// 本次 session 开始时间
+  var guruSessionStartTime: Date {
+    get { objc_getAssociatedObject(self, &AssociatedKeys.sessionStartTime) as? Date ?? Date() }
+    set { objc_setAssociatedObject(self, &AssociatedKeys.sessionStartTime, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+  }
+
+  /// 键盘弹出瞬间捕获的光标周围已有文本（打字前快照，与本次 session 输入无重叠）
+  var guruInitialContext: String {
+    get { objc_getAssociatedObject(self, &AssociatedKeys.initialContext) as? String ?? "" }
+    set { objc_setAssociatedObject(self, &AssociatedKeys.initialContext, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+  }
+
+  /// 开启新 session，同时快照当前输入框已有内容作为上下文
+  func guruBeginSession() {
+    guruTextBuffer = ""
+    guruSessionStartTime = Date()
+    // 捕获光标前后各一段文本，作为本次输入的背景语境
+    let before = String((textDocumentProxy.documentContextBeforeInput ?? "").suffix(300))
+    let after  = String((textDocumentProxy.documentContextAfterInput  ?? "").prefix(100))
+    let parts  = [before, after].filter { !$0.isEmpty }
+    guruInitialContext = parts.joined(separator: "…")
+  }
+
+  /// 追加文本到 session buffer
+  func guruAppendText(_ text: String) {
+    guard !text.isEmpty else { return }
+    guruTextBuffer += text
+  }
+
+  /// 删除 buffer 最后一个字符（对应用户按删除键）
+  func guruDeleteLastChar() {
+    guard !guruTextBuffer.isEmpty else { return }
+    guruTextBuffer.removeLast()
+  }
+
+  /// 删除 buffer 最后 N 个字符
+  func guruDeleteChars(_ count: Int) {
+    guard count > 0, !guruTextBuffer.isEmpty else { return }
+    let removeCount = min(count, guruTextBuffer.count)
+    guruTextBuffer.removeLast(removeCount)
+  }
+
+  /// session 结束时保存（键盘收起）
+  func guruFinalizeSession() {
+    let typed     = guruTextBuffer
+    let startTime = guruSessionStartTime
+    let rawContext = guruInitialContext
+    guruTextBuffer    = ""
+    guruInitialContext = ""
+
+    // 去重：裁掉 context 尾部与 typed 头部的重叠部分
+    // （同一输入框多次唤起键盘时，上次打的内容会出现在下次的 context 末尾）
+    let context = guruDeduplicateContext(rawContext, typed: typed)
+    let appCtx  = guruAppContext()
+    GURUDataService.shared.saveSession(GURUEntry(
+      startTime: startTime,
+      text: typed,
+      context: context,
+      appContext: appCtx
+    ))
+  }
+
+  /// 去重：若 context 尾部与 typed 前缀有重叠，裁掉重叠部分
+  private func guruDeduplicateContext(_ context: String, typed: String) -> String? {
+    guard !context.isEmpty else { return nil }
+    guard !typed.isEmpty else { return context }
+
+    // 若 typed 完全包含在 context 中（用户在已有文字中间插入），直接返回 context 即可
+    if context.contains(typed) { return context }
+
+    // 找 context 尾部与 typed 头部最长匹配，裁掉重叠
+    let maxCheck = min(context.count, typed.count)
+    for length in stride(from: maxCheck, through: 2, by: -1) {
+      if context.suffix(length) == typed.prefix(length) {
+        let trimmed = String(context.dropLast(length))
+          .trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+      }
+    }
+    return context
+  }
+
+  /// 从 textDocumentProxy 的三类信号推断当前输入场景
+  /// 注意：iOS 键盘扩展沙箱机制决定了无法获取宿主 app 的 bundle ID，
+  /// 这是目前能拿到的最精细信息。
+  func guruAppContext() -> String {
+    // 优先从 textContentType 推断，它是 app 主动声明的语义，最准确
+    if let ct = textDocumentProxy.textContentType {
+      switch ct {
+      case .username:             return "账号登录"
+      case .password, .newPassword: return "密码输入"
+      case .emailAddress:         return "Email"
+      case .telephoneNumber:      return "电话号码"
+      case .URL:                  return "链接/浏览器"
+      case .name:                 return "姓名"
+      case .givenName:            return "名字"
+      case .familyName:           return "姓氏"
+      case .organizationName:     return "组织名称"
+      case .fullStreetAddress,
+           .streetAddressLine1,
+           .streetAddressLine2:   return "街道地址"
+      case .addressCity:          return "城市"
+      case .addressState:         return "省/州"
+      case .addressCityAndState:  return "城市/省州"
+      case .countryName:          return "国家"
+      case .postalCode:           return "邮政编码"
+      case .creditCardNumber:     return "信用卡号"
+      case .oneTimeCode:          return "验证码"
+      case .jobTitle:             return "职位"
+      case .location:             return "地点"
+      case .nickname:             return "昵称"
+      case .sublocality:          return "地区"
+      case .middleName:           return "中间名"
+      case .namePrefix:           return "称谓"
+      case .nameSuffix:           return "名称后缀"
+      case .dateTime:             return "日期/时间"
+      case .flightNumber:         return "航班号"
+      case .shipmentTrackingNumber: return "快递单号"
+      default: break
+      }
+    }
+
+    // 次优：keyboardType，app 通常根据场景设置
+    switch textDocumentProxy.keyboardType {
+    case .emailAddress:           return "Email 输入"
+    case .URL:                    return "URL/浏览器"
+    case .webSearch:              return "网页搜索"
+    case .twitter:                return "社交媒体"
+    case .namePhonePad:           return "联系人"
+    case .numberPad,
+         .decimalPad,
+         .asciiCapableNumberPad:  return "数字输入"
+    case .phonePad:               return "电话号码"
+    case .numbersAndPunctuation:  return "数字/符号"
+    default: break
+    }
+
+    // 兜底：returnKeyType，根据按钮语义推断
+    switch textDocumentProxy.returnKeyType {
+    case .search, .google, .yahoo: return "搜索框"
+    case .send:                    return "消息发送"
+    case .go:                      return "跳转/确认"
+    case .join:                    return "加入/提交"
+    case .continue:                return "表单填写"
+    default:                       break
+    }
+
+    return "通用文本"
+  }
+}
+
+private enum AssociatedKeys {
+  static var textBuffer = "guruTextBuffer"
+  static var sessionStartTime = "guruSessionStartTime"
+  static var initialContext = "guruInitialContext"
 }
 
 extension UIKeyboardType {
