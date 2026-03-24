@@ -1053,10 +1053,20 @@ extension KeyboardInputViewController {
     set { objc_setAssociatedObject(self, &AssociatedKeys.initialContext, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
   }
 
+  /// 本次 session 是否因输入类型过滤而被屏蔽
+  var isCurrentSessionBlocked: Bool {
+    get { objc_getAssociatedObject(self, &AssociatedKeys.sessionBlocked) as? Bool ?? false }
+    set { objc_setAssociatedObject(self, &AssociatedKeys.sessionBlocked, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+  }
+
   /// 开启新 session，同时快照当前输入框已有内容作为上下文
   func guruBeginSession() {
     guruTextBuffer = ""
     guruSessionStartTime = Date()
+    // 检测当前输入场景，决定本次 session 是否采集
+    let category = guruDetectInputCategory()
+    isCurrentSessionBlocked = InputTypeFilter.shared.isBlocked(category)
+    guard !isCurrentSessionBlocked else { return }
     // 捕获光标前后各一段文本，作为本次输入的背景语境
     let before = String((textDocumentProxy.documentContextBeforeInput ?? "").suffix(300))
     let after  = String((textDocumentProxy.documentContextAfterInput  ?? "").prefix(100))
@@ -1064,10 +1074,59 @@ extension KeyboardInputViewController {
     guruInitialContext = parts.joined(separator: "…")
   }
 
-  /// 追加文本到 session buffer（隐私模式下静默跳过）
+  /// 追加文本到 session buffer（隐私模式 / 类型被屏蔽时静默跳过）
   func guruAppendText(_ text: String) {
-    guard !text.isEmpty, GURUPrivacyService.shared.isCollectionEnabled else { return }
+    guard !text.isEmpty,
+          GURUPrivacyService.shared.isCollectionEnabled,
+          !isCurrentSessionBlocked else { return }
     guruTextBuffer += text
+  }
+
+  /// 根据 textDocumentProxy 的多维信号推断当前输入场景类型
+  func guruDetectInputCategory() -> InputCategory {
+    // isSecureTextEntry 最高优先级
+    if textDocumentProxy.isSecureTextEntry == true { return .password }
+
+    // textContentType 语义声明
+    if let ct = textDocumentProxy.textContentType {
+      switch ct {
+      case .password, .newPassword:            return .password
+      case .creditCardNumber:                  return .payment
+      case .oneTimeCode:                       return .otp
+      case .username:                          return .login
+      case .telephoneNumber:                   return .phone
+      case .emailAddress:                      return .email
+      case .name, .givenName, .familyName,
+           .middleName, .namePrefix, .nameSuffix,
+           .nickname:                          return .name
+      case .fullStreetAddress,
+           .streetAddressLine1, .streetAddressLine2,
+           .addressCity, .addressState,
+           .addressCityAndState, .countryName,
+           .postalCode, .location, .sublocality: return .address
+      case .organizationName, .jobTitle:       return .organization
+      case .URL:                               return .url
+      case .dateTime:                          return .dateTime
+      case .flightNumber, .shipmentTrackingNumber: return .logistics
+      default: break
+      }
+    }
+
+    // keyboardType 次级信号
+    switch textDocumentProxy.keyboardType {
+    case .phonePad, .namePhonePad:  return .phone
+    case .emailAddress:             return .email
+    case .URL, .webSearch:          return .url
+    default: break
+    }
+
+    // returnKeyType 作为搜索语境补充信号
+    switch textDocumentProxy.returnKeyType {
+    case .search, .google, .yahoo:  return .url
+    default: break
+    }
+
+    return .general
   }
 
   /// 删除 buffer 最后一个字符（对应用户按删除键）
@@ -1083,15 +1142,17 @@ extension KeyboardInputViewController {
     guruTextBuffer.removeLast(removeCount)
   }
 
-  /// session 结束时保存（键盘收起）；隐私模式下清空 buffer 但不保存
+  /// session 结束时保存（键盘收起）；隐私模式或类型被屏蔽时清空 buffer 但不保存
   func guruFinalizeSession() {
-    let typed      = guruTextBuffer
-    let startTime  = guruSessionStartTime
-    let rawContext = guruInitialContext
-    guruTextBuffer     = ""
-    guruInitialContext = ""
+    let typed       = guruTextBuffer
+    let startTime   = guruSessionStartTime
+    let rawContext  = guruInitialContext
+    let wasBlocked  = isCurrentSessionBlocked
+    guruTextBuffer          = ""
+    guruInitialContext      = ""
+    isCurrentSessionBlocked = false
 
-    guard GURUPrivacyService.shared.isCollectionEnabled else { return }
+    guard GURUPrivacyService.shared.isCollectionEnabled, !wasBlocked else { return }
 
     // 去重：裁掉 context 尾部与 typed 头部的重叠部分
     // （同一输入框多次唤起键盘时，上次打的内容会出现在下次的 context 末尾）
@@ -1198,6 +1259,7 @@ private enum AssociatedKeys {
   static var textBuffer = "guruTextBuffer"
   static var sessionStartTime = "guruSessionStartTime"
   static var initialContext = "guruInitialContext"
+  static var sessionBlocked = "guruSessionBlocked"
 }
 
 extension UIKeyboardType {

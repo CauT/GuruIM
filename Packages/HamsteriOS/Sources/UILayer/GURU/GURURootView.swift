@@ -259,13 +259,26 @@ struct GURURootView: View {
 
   var sensitiveFilterSection: some View {
     Section {
+      // 输入场景过滤
+      NavigationLink {
+        InputTypePrivacyView()
+      } label: {
+        HStack {
+          Label("输入类型过滤", systemImage: "hand.raised.fill")
+          Spacer()
+          let blockedCount = InputCategory.allCases
+            .filter { InputTypeFilter.shared.isBlocked($0) }.count
+          Text("\(blockedCount)/\(InputCategory.allCases.count) 已屏蔽")
+            .font(.caption).foregroundColor(.secondary)
+        }
+      }
+      // 敏感词 / 正则过滤
       NavigationLink {
         SensitiveFilterSettingsView()
       } label: {
         HStack {
           Label("敏感词过滤", systemImage: "shield.lefthalf.filled")
           Spacer()
-          // 显示当前有几条规则激活
           let activeCount = (SensitiveFilter.shared.filterPhone ? 1 : 0)
             + (SensitiveFilter.shared.filterBankCard ? 1 : 0)
             + (SensitiveFilter.shared.filterEmail ? 1 : 0)
@@ -279,7 +292,7 @@ struct GURURootView: View {
     } header: {
       Text("隐私保护")
     } footer: {
-      Text("采集内容写入前自动过滤：支持手机号、银行卡、Email 和自定义敏感词，命中替换为 ***。")
+      Text("输入类型过滤：按场景屏蔽采集（密码/支付/验证码等）。敏感词过滤：内容写入时将手机号、银行卡等替换为 ***。")
         .font(.caption)
     }
   }
