@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 
-/// 剪贴板监听服务 - 记录每次剪贴板内容变化
+/// 剪贴板监听服务 - 记录每次剪贴板内容变化（文字、图片、Emoji）
 /// 键盘扩展和主 App 共享同一个单例（通过 App Group）
 public class ClipboardMonitorService {
   public static let shared = ClipboardMonitorService()
@@ -14,14 +14,10 @@ public class ClipboardMonitorService {
   /// 上次记录时的 changeCount，用于检测新变化
   private var lastChangeCount: Int
 
-  /// 是否启用剪贴板监听（从 UserDefaults App Group 读取）
+  /// 是否启用剪贴板监听
   public var isEnabled: Bool {
-    get {
-      UserDefaults(suiteName: HamsterConstants.appGroupName)?.bool(forKey: "clipboardMonitorEnabled") ?? false
-    }
-    set {
-      UserDefaults(suiteName: HamsterConstants.appGroupName)?.set(newValue, forKey: "clipboardMonitorEnabled")
-    }
+    get { UserDefaults(suiteName: HamsterConstants.appGroupName)?.bool(forKey: "clipboardMonitorEnabled") ?? false }
+    set { UserDefaults(suiteName: HamsterConstants.appGroupName)?.set(newValue, forKey: "clipboardMonitorEnabled") }
   }
 
   // MARK: - Paths
@@ -32,6 +28,10 @@ public class ClipboardMonitorService {
 
   public var clipboardBaseURL: URL? {
     appGroupURL?.appendingPathComponent("Clipboard", isDirectory: true)
+  }
+
+  private var imagesURL: URL? {
+    clipboardBaseURL?.appendingPathComponent("images", isDirectory: true)
   }
 
   private static let dateFormatter: DateFormatter = {
@@ -49,7 +49,7 @@ public class ClipboardMonitorService {
     decoder = JSONDecoder()
     decoder.dateDecodingStrategy = .iso8601
     lastChangeCount = UIPasteboard.general.changeCount
-    createDirectoryIfNeeded()
+    createDirectoriesIfNeeded()
   }
 
   // MARK: - Monitor
@@ -61,22 +61,45 @@ public class ClipboardMonitorService {
     guard current != lastChangeCount else { return }
     lastChangeCount = current
 
-    guard let text = UIPasteboard.general.string, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+    let pasteboard = UIPasteboard.general
 
-    let entry = ClipboardEntry(
-      timestamp: Date(),
-      content: text,
-      contentType: ClipboardContentType.infer(from: text)
-    )
+    // 优先尝试图片
+    if pasteboard.hasImages, let image = pasteboard.image {
+      recordImage(image)
+      return
+    }
+
+    // 文字（含 Emoji）
+    guard let text = pasteboard.string,
+          !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+    let type = ClipboardContentType.infer(from: text)
+    let entry = ClipboardEntry(timestamp: Date(), content: text, contentType: type)
+    writeQueue.async { [weak self] in self?.writeEntry(entry) }
+  }
+
+  private func recordImage(_ image: UIImage) {
     writeQueue.async { [weak self] in
-      self?.writeEntry(entry)
+      guard let self else { return }
+      // 保存图片到 Clipboard/images/UUID.jpg
+      let filename = "\(UUID().uuidString).jpg"
+      guard let imgURL = self.imagesURL?.appendingPathComponent(filename),
+            let data = image.jpegData(compressionQuality: 0.8)
+      else { return }
+      try? data.write(to: imgURL)
+      let entry = ClipboardEntry(
+        timestamp: Date(),
+        content: "",
+        contentType: .image,
+        imageFilename: filename
+      )
+      self.writeEntry(entry)
     }
   }
 
   // MARK: - Write
 
   private func writeEntry(_ entry: ClipboardEntry) {
-    guard let url = dailyFileURL(for: entry.timestamp) else { return }
+    guard entry.isMeaningful, let url = dailyFileURL(for: entry.timestamp) else { return }
     do {
       let data = try encoder.encode(entry)
       guard var line = String(data: data, encoding: .utf8) else { return }
@@ -118,6 +141,13 @@ public class ClipboardMonitorService {
       }
   }
 
+  /// 读取图片数据（仅 image 类型条目有效）
+  public func imageData(for entry: ClipboardEntry) -> UIImage? {
+    guard entry.contentType == .image, let filename = entry.imageFilename,
+          let url = imagesURL?.appendingPathComponent(filename) else { return nil }
+    return UIImage(contentsOfFile: url.path)
+  }
+
   public func totalEntryCount() -> Int {
     availableDates().reduce(0) { $0 + entries(for: $1).count }
   }
@@ -125,6 +155,12 @@ public class ClipboardMonitorService {
   // MARK: - Delete
 
   public func deleteEntries(for date: Date) {
+    // 同时删除当天引用的图片文件
+    entries(for: date).compactMap(\.imageFilename).forEach { filename in
+      if let url = imagesURL?.appendingPathComponent(filename) {
+        try? fileManager.removeItem(at: url)
+      }
+    }
     guard let url = dailyFileURL(for: date) else { return }
     try? fileManager.removeItem(at: url)
   }
@@ -133,9 +169,8 @@ public class ClipboardMonitorService {
     availableDates().forEach { deleteEntries(for: $0) }
   }
 
-  // MARK: - Export (Markdown for AI)
+  // MARK: - Export
 
-  /// 导出 Markdown 格式（适合喂给大模型）
   public func exportMarkdown(dates: [Date]) -> String {
     var md = "# Clipboard Log\n\n"
     for date in dates.sorted() {
@@ -144,7 +179,11 @@ public class ClipboardMonitorService {
       md += "## \(Self.dateFormatter.string(from: date))\n\n"
       for entry in entries {
         md += "### \(entry.formattedTime) · [剪贴板/\(entry.contentType.rawValue)]\n\n"
-        md += entry.content + "\n\n"
+        if entry.contentType == .image {
+          md += "_[图片已保存，文件名: \(entry.imageFilename ?? "unknown")]_\n\n"
+        } else {
+          md += entry.content + "\n\n"
+        }
         md += "---\n\n"
       }
     }
@@ -158,8 +197,12 @@ public class ClipboardMonitorService {
     return clipboardBaseURL?.appendingPathComponent(filename)
   }
 
-  private func createDirectoryIfNeeded() {
-    guard let base = clipboardBaseURL else { return }
-    try? fileManager.createDirectory(at: base, withIntermediateDirectories: true)
+  private func createDirectoriesIfNeeded() {
+    if let base = clipboardBaseURL {
+      try? fileManager.createDirectory(at: base, withIntermediateDirectories: true)
+    }
+    if let imgs = imagesURL {
+      try? fileManager.createDirectory(at: imgs, withIntermediateDirectories: true)
+    }
   }
 }

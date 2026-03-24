@@ -1,10 +1,11 @@
+import AuthenticationServices
 import Combine
 import Foundation
 import HamsterKit
 import UIKit
 
 class GURUViewModel: ObservableObject {
-  // MARK: - Published State
+  // MARK: - Published State (GURU)
 
   @Published var availableDates: [Date] = []
   @Published var selectedDates: Set<Date> = []
@@ -16,20 +17,36 @@ class GURUViewModel: ObservableObject {
   @Published var totalEntryCount: Int = 0
   @Published var storageSize: String = ""
 
-  private let service = GURUDataService.shared
-  private let clipboardService = ClipboardMonitorService.shared
-
   // MARK: - Clipboard State
 
   @Published var clipboardEnabled: Bool = ClipboardMonitorService.shared.isEnabled
   @Published var clipboardEntryCount: Int = 0
   @Published var clipboardPreviewEntries: [ClipboardEntry] = []
 
+  // MARK: - Google Drive State
+
+  @Published var googleDriveEmail: String? = GoogleDriveService.shared.signedInEmail
+  @Published var isGoogleSyncing: Bool = false
+  @Published var googleSyncProgress: Double = 0
+  @Published var googleStatusMessage: String = ""
+
+  // MARK: - AI State
+
+  @Published var aiSelectedProvider: AIProvider = AIService.shared.selectedProvider
+  @Published var aiSelectedModel: String = AIService.shared.selectedModel
+  @Published var aiMessages: [AIMessage] = []
+  @Published var aiIsLoading: Bool = false
+  @Published var aiStatusMessage: String = ""
+  @Published var savedPrompts: [AIPrompt] = AIService.shared.savedPrompts
+
+  private let service = GURUDataService.shared
+  private let clipboardService = ClipboardMonitorService.shared
+  private let googleService = GoogleDriveService.shared
+  private let aiService = AIService.shared
+
   // MARK: - Init
 
-  init() {
-    reload()
-  }
+  init() { reload() }
 
   // MARK: - Data
 
@@ -37,11 +54,8 @@ class GURUViewModel: ObservableObject {
     availableDates = service.availableDates()
     totalEntryCount = service.totalEntryCount()
     storageSize = formatBytes(service.localStorageSize())
-    // 默认全选
     selectedDates = Set(availableDates)
-    if let first = availableDates.first {
-      loadPreview(for: first)
-    }
+    if let first = availableDates.first { loadPreview(for: first) }
     reloadClipboard()
   }
 
@@ -66,48 +80,79 @@ class GURUViewModel: ObservableObject {
   }
 
   func toggleDateSelection(_ date: Date) {
-    if selectedDates.contains(date) {
-      selectedDates.remove(date)
-    } else {
-      selectedDates.insert(date)
-    }
+    if selectedDates.contains(date) { selectedDates.remove(date) }
+    else { selectedDates.insert(date) }
   }
 
-  func selectAll() {
-    selectedDates = Set(availableDates)
-  }
+  func selectAll() { selectedDates = Set(availableDates) }
+  func deselectAll() { selectedDates = [] }
 
-  func deselectAll() {
-    selectedDates = []
-  }
-
-  // MARK: - Upload
+  // MARK: - iCloud Upload
 
   func uploadSelected(completion: @escaping (Bool) -> Void) {
-    guard !selectedDates.isEmpty else {
-      statusMessage = "请先选择要上传的日期"
-      completion(false)
-      return
-    }
+    guard !selectedDates.isEmpty else { statusMessage = "请先选择要上传的日期"; completion(false); return }
     isUploading = true
     uploadProgress = 0
     statusMessage = "正在上传..."
-
     service.uploadToiCloud(
       dates: Array(selectedDates),
-      progress: { [weak self] p in
-        DispatchQueue.main.async { self?.uploadProgress = p }
-      },
+      progress: { [weak self] p in DispatchQueue.main.async { self?.uploadProgress = p } },
       completion: { [weak self] result in
         DispatchQueue.main.async {
           self?.isUploading = false
           switch result {
-          case .success(let count):
-            self?.statusMessage = "已上传 \(count) 个文件到 iCloud ✓"
-            completion(true)
-          case .failure(let error):
-            self?.statusMessage = "上传失败：\(error.localizedDescription)"
-            completion(false)
+          case .success(let count): self?.statusMessage = "已上传 \(count) 个文件到 iCloud ✓"; completion(true)
+          case .failure(let error): self?.statusMessage = "上传失败：\(error.localizedDescription)"; completion(false)
+          }
+        }
+      }
+    )
+  }
+
+  // MARK: - Google Drive
+
+  func googleSignIn(anchor: ASPresentationAnchor) {
+    guard googleService.isConfigured else {
+      googleStatusMessage = "请先在 HamsterConstants.swift 填入 Google OAuth Client ID"
+      return
+    }
+    googleStatusMessage = "正在打开 Google 登录..."
+    googleService.signIn(anchor: anchor) { [weak self] result in
+      DispatchQueue.main.async {
+        switch result {
+        case .success:
+          self?.googleDriveEmail = GoogleDriveService.shared.signedInEmail
+          self?.googleStatusMessage = "已登录 Google Drive ✓"
+        case .failure(let error):
+          self?.googleStatusMessage = "登录失败：\(error.localizedDescription)"
+        }
+      }
+    }
+  }
+
+  func googleSignOut() {
+    googleService.signOut()
+    googleDriveEmail = nil
+    googleStatusMessage = ""
+  }
+
+  func syncToGoogleDrive() {
+    guard !selectedDates.isEmpty else { googleStatusMessage = "请先选择要同步的日期"; return }
+    guard let guruBase = service.guruBaseURL else { googleStatusMessage = "无法获取本地数据路径"; return }
+    isGoogleSyncing = true
+    googleSyncProgress = 0
+    googleStatusMessage = "正在同步到 Google Drive..."
+
+    googleService.syncGURU(
+      dates: Array(selectedDates),
+      guruBaseURL: guruBase,
+      progress: { [weak self] p in DispatchQueue.main.async { self?.googleSyncProgress = p } },
+      completion: { [weak self] result in
+        DispatchQueue.main.async {
+          self?.isGoogleSyncing = false
+          switch result {
+          case .success(let count): self?.googleStatusMessage = "已同步 \(count) 个文件到 Google Drive ✓"
+          case .failure(let error): self?.googleStatusMessage = "同步失败：\(error.localizedDescription)"
           }
         }
       }
@@ -116,9 +161,7 @@ class GURUViewModel: ObservableObject {
 
   // MARK: - Export
 
-  func exportMarkdown() -> String {
-    service.exportMarkdown(dates: Array(selectedDates).sorted())
-  }
+  func exportMarkdown() -> String { service.exportMarkdown(dates: Array(selectedDates).sorted()) }
 
   func exportFileURL() -> URL? {
     let markdown = exportMarkdown()
@@ -130,25 +173,98 @@ class GURUViewModel: ObservableObject {
 
   // MARK: - Delete
 
-  func deleteDate(_ date: Date) {
-    service.deleteEntries(for: date)
-    reload()
+  func deleteDate(_ date: Date) { service.deleteEntries(for: date); reload() }
+  func deleteSelected() { selectedDates.forEach { service.deleteEntries(for: $0) }; reload() }
+
+  // MARK: - AI
+
+  func setProvider(_ provider: AIProvider) {
+    aiService.selectedProvider = provider
+    aiSelectedProvider = provider
+    aiSelectedModel = provider.defaultModel
+    aiService.selectedModel = aiSelectedModel
   }
 
-  func deleteSelected() {
-    selectedDates.forEach { service.deleteEntries(for: $0) }
-    reload()
+  func setModel(_ model: String) {
+    aiService.selectedModel = model
+    aiSelectedModel = model
+  }
+
+  func setAPIKey(_ key: String, for provider: AIProvider) {
+    aiService.setApiKey(key, for: provider)
+  }
+
+  func apiKey(for provider: AIProvider) -> String {
+    aiService.apiKey(for: provider)
+  }
+
+  /// 构建携带选定日期数据的用户消息并发送
+  func sendAIQuery(prompt: AIPrompt, includeGURU: Bool, includeClipboard: Bool) {
+    var contextText = prompt.content
+
+    if includeGURU && !selectedDates.isEmpty {
+      contextText += "\n\n## 我的输入记录（选定日期）\n\n"
+      contextText += service.exportMarkdown(dates: Array(selectedDates).sorted())
+    }
+
+    if includeClipboard {
+      let clipDates = clipboardService.availableDates()
+      if !clipDates.isEmpty {
+        contextText += "\n\n## 我的剪贴板记录\n\n"
+        contextText += clipboardService.exportMarkdown(dates: clipDates)
+      }
+    }
+
+    sendAIMessage(content: contextText)
+  }
+
+  func sendAIMessage(content: String) {
+    guard !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+    aiMessages.append(AIMessage(role: "user", content: content))
+    aiIsLoading = true
+    aiStatusMessage = "AI 分析中..."
+
+    aiService.chat(messages: aiMessages) { [weak self] result in
+      DispatchQueue.main.async {
+        self?.aiIsLoading = false
+        switch result {
+        case .success(let reply):
+          self?.aiMessages.append(AIMessage(role: "assistant", content: reply))
+          self?.aiStatusMessage = ""
+        case .failure(let error):
+          self?.aiStatusMessage = error.localizedDescription
+        }
+      }
+    }
+  }
+
+  func clearAIConversation() {
+    aiMessages = []
+    aiStatusMessage = ""
+  }
+
+  func reloadSavedPrompts() {
+    savedPrompts = aiService.savedPrompts
+  }
+
+  func savePrompt(_ prompt: AIPrompt) {
+    if savedPrompts.contains(where: { $0.id == prompt.id }) {
+      aiService.updatePrompt(prompt)
+    } else {
+      aiService.addPrompt(prompt)
+    }
+    reloadSavedPrompts()
+  }
+
+  func deletePrompt(id: UUID) {
+    aiService.deletePrompt(id: id)
+    reloadSavedPrompts()
   }
 
   // MARK: - Helpers
 
-  func entryCount(for date: Date) -> Int {
-    service.entries(for: date).count
-  }
-
-  func formattedDate(_ date: Date) -> String {
-    GURUDataService.dateFormatter.string(from: date)
-  }
+  func entryCount(for date: Date) -> Int { service.entries(for: date).count }
+  func formattedDate(_ date: Date) -> String { GURUDataService.dateFormatter.string(from: date) }
 
   private func formatBytes(_ bytes: Int64) -> String {
     if bytes < 1024 { return "\(bytes) B" }
