@@ -43,6 +43,35 @@ class KeyboardToolbarView: NibLessView {
     return button
   }()
 
+  /// Now Guru 按钮：打开 GURU 数据管理页面
+  lazy var guruButton: UIButton = {
+    let button = UIButton(type: .custom)
+    button.translatesAutoresizingMaskIntoConstraints = false
+    button.setImage(UIImage(systemName: "brain.head.profile"), for: .normal)
+    button.setPreferredSymbolConfiguration(.init(font: .systemFont(ofSize: 18), scale: .default), forImageIn: .normal)
+    button.tintColor = style.toolbarButtonFrontColor
+    button.backgroundColor = style.toolbarButtonBackgroundColor
+    button.addTarget(self, action: #selector(guruButtonTouchDownAction), for: .touchDown)
+    button.addTarget(self, action: #selector(guruButtonTouchUpAction), for: .touchUpInside)
+    button.addTarget(self, action: #selector(touchCancel), for: .touchCancel)
+    button.addTarget(self, action: #selector(touchCancel), for: .touchUpOutside)
+    return button
+  }()
+
+  /// 隐私开关按钮：点击切换「采集中 / 隐私暂停」状态
+  lazy var privacyButton: UIButton = {
+    let button = UIButton(type: .custom)
+    button.translatesAutoresizingMaskIntoConstraints = false
+    button.setPreferredSymbolConfiguration(.init(font: .systemFont(ofSize: 18), scale: .default), forImageIn: .normal)
+    button.tintColor = style.toolbarButtonFrontColor
+    button.backgroundColor = style.toolbarButtonBackgroundColor
+    button.addTarget(self, action: #selector(privacyButtonTouchDownAction), for: .touchDown)
+    button.addTarget(self, action: #selector(privacyButtonTouchUpAction), for: .touchUpInside)
+    button.addTarget(self, action: #selector(touchCancel), for: .touchCancel)
+    button.addTarget(self, action: #selector(touchCancel), for: .touchUpOutside)
+    return button
+  }()
+
   /// 解散键盘 Button
   lazy var dismissKeyboardButton: UIButton = {
     let button = UIButton(type: .custom)
@@ -113,9 +142,12 @@ class KeyboardToolbarView: NibLessView {
     if keyboardContext.displayAppIconButton {
       commonFunctionBar.addSubview(iconButton)
     }
+    commonFunctionBar.addSubview(guruButton)
+    commonFunctionBar.addSubview(privacyButton)
     if keyboardContext.displayKeyboardDismissButton {
       commonFunctionBar.addSubview(dismissKeyboardButton)
     }
+    updatePrivacyButtonAppearance()
   }
 
   override func activateViewConstraints() {
@@ -136,6 +168,20 @@ class KeyboardToolbarView: NibLessView {
       ])
     }
 
+    // Guru button: 居中显示
+    constraints.append(contentsOf: [
+      guruButton.centerXAnchor.constraint(equalTo: commonFunctionBar.centerXAnchor),
+      guruButton.centerYAnchor.constraint(equalTo: commonFunctionBar.centerYAnchor),
+      guruButton.heightAnchor.constraint(equalTo: commonFunctionBar.heightAnchor, multiplier: 0.8),
+      guruButton.widthAnchor.constraint(equalTo: guruButton.heightAnchor),
+    ])
+
+    // 隐私按钮：紧靠 dismissKeyboardButton 左侧（若无 dismiss 按钮则贴右边缘）
+    constraints.append(contentsOf: [
+      privacyButton.heightAnchor.constraint(equalTo: commonFunctionBar.heightAnchor, multiplier: 0.8),
+      privacyButton.widthAnchor.constraint(equalTo: privacyButton.heightAnchor),
+      privacyButton.centerYAnchor.constraint(equalTo: commonFunctionBar.centerYAnchor),
+    ])
     if keyboardContext.displayKeyboardDismissButton {
       constraints.append(contentsOf: [
         dismissKeyboardButton.heightAnchor.constraint(equalTo: dismissKeyboardButton.widthAnchor),
@@ -143,7 +189,12 @@ class KeyboardToolbarView: NibLessView {
         dismissKeyboardButton.topAnchor.constraint(lessThanOrEqualTo: commonFunctionBar.topAnchor),
         commonFunctionBar.bottomAnchor.constraint(greaterThanOrEqualTo: dismissKeyboardButton.bottomAnchor),
         dismissKeyboardButton.centerYAnchor.constraint(equalTo: commonFunctionBar.centerYAnchor),
+        privacyButton.trailingAnchor.constraint(equalTo: dismissKeyboardButton.leadingAnchor, constant: -4),
       ])
+    } else {
+      constraints.append(
+        privacyButton.trailingAnchor.constraint(equalTo: commonFunctionBar.trailingAnchor)
+      )
     }
 
     NSLayoutConstraint.activate(constraints)
@@ -154,9 +205,18 @@ class KeyboardToolbarView: NibLessView {
     if keyboardContext.displayAppIconButton {
       iconButton.tintColor = style.toolbarButtonFrontColor
     }
+    guruButton.tintColor = style.toolbarButtonFrontColor
     if keyboardContext.displayKeyboardDismissButton {
       dismissKeyboardButton.tintColor = style.toolbarButtonFrontColor
     }
+    updatePrivacyButtonAppearance()
+  }
+
+  func updatePrivacyButtonAppearance() {
+    let collecting = GURUPrivacyService.shared.isCollectionEnabled
+    let icon = collecting ? "eye" : "eye.slash"
+    privacyButton.setImage(UIImage(systemName: icon), for: .normal)
+    privacyButton.tintColor = collecting ? style.toolbarButtonFrontColor : .systemOrange
   }
 
   func combine() {
@@ -202,11 +262,32 @@ class KeyboardToolbarView: NibLessView {
 
   @objc func openHamsterAppTouchUpAction() {
     iconButton.backgroundColor = style.toolbarButtonPressedBackgroundColor
-    actionHandler.handle(.release, on: .url(URL(string: "hamster://dev.fuxiao.app.hamster/main"), id: "openHamster"))
+    actionHandler.handle(.release, on: .url(URL(string: "hamster://com.desgemini.guru/main"), id: "openHamster"))
+  }
+
+  @objc func guruButtonTouchDownAction() {
+    guruButton.backgroundColor = style.toolbarButtonPressedBackgroundColor
+  }
+
+  @objc func guruButtonTouchUpAction() {
+    guruButton.backgroundColor = style.toolbarButtonBackgroundColor
+    actionHandler.handle(.release, on: .url(URL(string: "hamster://com.desgemini.guru/guru"), id: "openGuru"))
+  }
+
+  @objc func privacyButtonTouchDownAction() {
+    privacyButton.backgroundColor = style.toolbarButtonPressedBackgroundColor
+  }
+
+  @objc func privacyButtonTouchUpAction() {
+    privacyButton.backgroundColor = style.toolbarButtonBackgroundColor
+    GURUPrivacyService.shared.toggle()
+    updatePrivacyButtonAppearance()
   }
 
   @objc func touchCancel() {
     dismissKeyboardButton.backgroundColor = style.toolbarButtonBackgroundColor
     iconButton.backgroundColor = style.toolbarButtonBackgroundColor
+    guruButton.backgroundColor = style.toolbarButtonBackgroundColor
+    privacyButton.backgroundColor = style.toolbarButtonBackgroundColor
   }
 }

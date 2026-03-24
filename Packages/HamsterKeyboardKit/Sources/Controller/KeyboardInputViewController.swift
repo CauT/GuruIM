@@ -50,10 +50,11 @@ open class KeyboardInputViewController: UIInputViewController, KeyboardControlle
     setupRIME()
     viewWillSetupKeyboard()
     viewWillSyncWithContext()
-    // GURU: 每次键盘弹出开启新 session
-    guruBeginSession()
-    // 剪贴板：检查是否有新内容并记录
-    ClipboardMonitorService.shared.checkAndRecord()
+    // GURU: 每次键盘弹出开启新 session（隐私模式下跳过）
+    if GURUPrivacyService.shared.isCollectionEnabled {
+      guruBeginSession()
+      ClipboardMonitorService.shared.checkAndRecord()
+    }
 
     // fix: 屏幕边缘按键触摸延迟
     // https://stackoverflow.com/questions/39813245/touchesbeganwithevent-is-delayed-at-left-edge-of-screen
@@ -1063,9 +1064,9 @@ extension KeyboardInputViewController {
     guruInitialContext = parts.joined(separator: "…")
   }
 
-  /// 追加文本到 session buffer
+  /// 追加文本到 session buffer（隐私模式下静默跳过）
   func guruAppendText(_ text: String) {
-    guard !text.isEmpty else { return }
+    guard !text.isEmpty, GURUPrivacyService.shared.isCollectionEnabled else { return }
     guruTextBuffer += text
   }
 
@@ -1082,13 +1083,15 @@ extension KeyboardInputViewController {
     guruTextBuffer.removeLast(removeCount)
   }
 
-  /// session 结束时保存（键盘收起）
+  /// session 结束时保存（键盘收起）；隐私模式下清空 buffer 但不保存
   func guruFinalizeSession() {
-    let typed     = guruTextBuffer
-    let startTime = guruSessionStartTime
+    let typed      = guruTextBuffer
+    let startTime  = guruSessionStartTime
     let rawContext = guruInitialContext
-    guruTextBuffer    = ""
+    guruTextBuffer     = ""
     guruInitialContext = ""
+
+    guard GURUPrivacyService.shared.isCollectionEnabled else { return }
 
     // 去重：裁掉 context 尾部与 typed 头部的重叠部分
     // （同一输入框多次唤起键盘时，上次打的内容会出现在下次的 context 末尾）
