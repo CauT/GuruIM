@@ -64,6 +64,9 @@ struct GURURootView: View {
       // Google Drive 同步
       googleDriveSection
 
+      // 敏感词过滤
+      sensitiveFilterSection
+
       // AI 分析
       aiSection
 
@@ -248,6 +251,35 @@ struct GURURootView: View {
       Text("Google Drive 同步")
     } footer: {
       Text("同步 GURU 输入记录至 Google Drive / Hamster / GURU / 目录。首次使用请在 HamsterConstants.swift 填入 Google OAuth Client ID 并登录。")
+        .font(.caption)
+    }
+  }
+
+  // MARK: - Sensitive Filter Section
+
+  var sensitiveFilterSection: some View {
+    Section {
+      NavigationLink {
+        SensitiveFilterSettingsView()
+      } label: {
+        HStack {
+          Label("敏感词过滤", systemImage: "shield.lefthalf.filled")
+          Spacer()
+          // 显示当前有几条规则激活
+          let activeCount = (SensitiveFilter.shared.filterPhone ? 1 : 0)
+            + (SensitiveFilter.shared.filterBankCard ? 1 : 0)
+            + (SensitiveFilter.shared.filterEmail ? 1 : 0)
+            + SensitiveFilter.shared.customWords.count
+          if activeCount > 0 {
+            Text("\(activeCount) 条规则")
+              .font(.caption).foregroundColor(.secondary)
+          }
+        }
+      }
+    } header: {
+      Text("隐私保护")
+    } footer: {
+      Text("采集内容写入前自动过滤：支持手机号、银行卡、Email 和自定义敏感词，命中替换为 ***。")
         .font(.caption)
     }
   }

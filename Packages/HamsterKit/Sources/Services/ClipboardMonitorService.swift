@@ -69,9 +69,10 @@ public class ClipboardMonitorService {
       return
     }
 
-    // 文字（含 Emoji）
-    guard let text = pasteboard.string,
-          !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+    // 文字（含 Emoji）：写入前经敏感词过滤
+    guard let rawText = pasteboard.string,
+          !rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+    let text = SensitiveFilter.shared.filter(rawText)
     let type = ClipboardContentType.infer(from: text)
     let entry = ClipboardEntry(timestamp: Date(), content: text, contentType: type)
     writeQueue.async { [weak self] in self?.writeEntry(entry) }
