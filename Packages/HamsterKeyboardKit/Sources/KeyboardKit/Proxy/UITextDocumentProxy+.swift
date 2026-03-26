@@ -264,6 +264,43 @@ public extension UITextDocumentProxy {
     for _ in 0 ..< times { deleteBackward() }
   }
 
+  /// 删除光标所在的整行内容
+  func deleteCurrentLine() {
+    // 先删除光标前到行首的内容
+    if let before = documentContextBeforeInput {
+      // 找到最后一个换行符的位置，删除从那里到光标的所有内容
+      let lineStart = before.lastIndex(of: "\n")
+      let charsBeforeCursor: Int
+      if let lineStart = lineStart {
+        charsBeforeCursor = before.distance(from: lineStart, to: before.endIndex) - 1
+      } else {
+        charsBeforeCursor = before.count
+      }
+      if charsBeforeCursor > 0 {
+        deleteBackward(times: charsBeforeCursor)
+      }
+    }
+    // 再删除光标后到行尾的内容
+    if let after = documentContextAfterInput {
+      let lineEnd = after.firstIndex(of: "\n")
+      let charsAfterCursor: Int
+      if let lineEnd = lineEnd {
+        charsAfterCursor = after.distance(from: after.startIndex, to: lineEnd)
+      } else {
+        charsAfterCursor = after.count
+      }
+      if charsAfterCursor > 0 {
+        // 先选中光标后的内容再删除
+        adjustTextPosition(byCharacterOffset: charsAfterCursor)
+        deleteBackward(times: charsAfterCursor)
+      }
+    }
+    // 如果光标现在位于换行符前，删除该换行符（删除整行包括行本身）
+    if let before = documentContextBeforeInput, before.hasSuffix("\n") {
+      deleteBackward()
+    }
+  }
+
   /// 给定范围 `range`，向后删除
   func deleteBackwardText(for range: DeleteBackwardRange) -> String? {
     guard let text = documentContextBeforeInput else { return nil }

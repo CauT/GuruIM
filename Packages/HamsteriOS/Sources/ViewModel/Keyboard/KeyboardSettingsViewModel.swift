@@ -56,6 +56,16 @@ public class KeyboardSettingsViewModel: ObservableObject, Hashable, Identifiable
     }
   }
 
+  public var enableBackspaceSwipeUpDeleteLine: Bool {
+    get {
+      HamsterAppDependencyContainer.shared.configuration.keyboard?.enableBackspaceSwipeUpDeleteLine ?? true
+    }
+    set {
+      HamsterAppDependencyContainer.shared.configuration.keyboard?.enableBackspaceSwipeUpDeleteLine = newValue
+      HamsterAppDependencyContainer.shared.applicationConfiguration.keyboard?.enableBackspaceSwipeUpDeleteLine = newValue
+    }
+  }
+
   public var disableSwipeLabel: Bool {
     get {
       HamsterAppDependencyContainer.shared.configuration.keyboard?.disableSwipeLabel ?? false
@@ -705,6 +715,13 @@ public class KeyboardSettingsViewModel: ObservableObject, Hashable, Identifiable
           toggleValue: { [unowned self] in lockShiftState },
           toggleHandled: { [unowned self] in
             lockShiftState = $0
+          }),
+        .init(
+          text: "删除键上滑删除整行",
+          type: .toggle,
+          toggleValue: { [unowned self] in enableBackspaceSwipeUpDeleteLine },
+          toggleHandled: { [unowned self] in
+            enableBackspaceSwipeUpDeleteLine = $0
           })
       ]),
 

@@ -223,6 +223,12 @@ public extension KeyboardButton {
     Logger.statistics.debug("swipeAction(), direction: \(direction.debugDescription)")
     switch direction {
     case .up:
+      // 删除键上滑：删除整行
+      if item.action == .backspace,
+         keyboardContext.hamsterConfiguration?.keyboard?.enableBackspaceSwipeUpDeleteLine ?? true {
+        keyboardContext.textDocumentProxy.deleteCurrentLine()
+        return
+      }
       if let swipe = item.swipes.first(where: { $0.direction == .up }) {
         actionHandler.handle(.swipeUp(swipe), on: swipe.action)
       }
