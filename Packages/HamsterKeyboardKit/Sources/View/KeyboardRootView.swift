@@ -137,9 +137,11 @@ class KeyboardRootView: NibLessView {
   /// emoji键盘
   /// 注意：计算属性
   private var emojisKeyboardView: UIView {
-    // TODO:
-    let view = UIView()
-    view.backgroundColor = .red
+    let view = EmojisKeyboard(
+      keyboardContext: keyboardContext,
+      actionHandler: actionHandler,
+      appearance: appearance
+    )
     view.translatesAutoresizingMaskIntoConstraints = false
     return view
   }

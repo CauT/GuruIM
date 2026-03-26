@@ -58,6 +58,21 @@ class KeyboardToolbarView: NibLessView {
     return button
   }()
 
+  /// Emoji 按钮：打开表情键盘
+  lazy var emojiButton: UIButton = {
+    let button = UIButton(type: .custom)
+    button.translatesAutoresizingMaskIntoConstraints = false
+    button.setImage(UIImage(systemName: "face.smiling"), for: .normal)
+    button.setPreferredSymbolConfiguration(.init(font: .systemFont(ofSize: 18), scale: .default), forImageIn: .normal)
+    button.tintColor = style.toolbarButtonFrontColor
+    button.backgroundColor = style.toolbarButtonBackgroundColor
+    button.addTarget(self, action: #selector(emojiButtonTouchDownAction), for: .touchDown)
+    button.addTarget(self, action: #selector(emojiButtonTouchUpAction), for: .touchUpInside)
+    button.addTarget(self, action: #selector(touchCancel), for: .touchCancel)
+    button.addTarget(self, action: #selector(touchCancel), for: .touchUpOutside)
+    return button
+  }()
+
   /// 隐私开关按钮：点击切换「采集中 / 隐私暂停」状态
   lazy var privacyButton: UIButton = {
     let button = UIButton(type: .custom)
@@ -143,6 +158,7 @@ class KeyboardToolbarView: NibLessView {
       commonFunctionBar.addSubview(iconButton)
     }
     commonFunctionBar.addSubview(guruButton)
+    commonFunctionBar.addSubview(emojiButton)
     commonFunctionBar.addSubview(privacyButton)
     if keyboardContext.displayKeyboardDismissButton {
       commonFunctionBar.addSubview(dismissKeyboardButton)
@@ -176,11 +192,19 @@ class KeyboardToolbarView: NibLessView {
       guruButton.widthAnchor.constraint(equalTo: guruButton.heightAnchor),
     ])
 
-    // 隐私按钮：紧靠 dismissKeyboardButton 左侧（若无 dismiss 按钮则贴右边缘）
+    // Emoji 按钮：位于隐私按钮左侧
+    constraints.append(contentsOf: [
+      emojiButton.heightAnchor.constraint(equalTo: commonFunctionBar.heightAnchor, multiplier: 0.8),
+      emojiButton.widthAnchor.constraint(equalTo: emojiButton.heightAnchor),
+      emojiButton.centerYAnchor.constraint(equalTo: commonFunctionBar.centerYAnchor),
+    ])
+
+    // 隐私按钮：紧靠 emoji 按钮右侧
     constraints.append(contentsOf: [
       privacyButton.heightAnchor.constraint(equalTo: commonFunctionBar.heightAnchor, multiplier: 0.8),
       privacyButton.widthAnchor.constraint(equalTo: privacyButton.heightAnchor),
       privacyButton.centerYAnchor.constraint(equalTo: commonFunctionBar.centerYAnchor),
+      privacyButton.leadingAnchor.constraint(equalTo: emojiButton.trailingAnchor, constant: 4),
     ])
     if keyboardContext.displayKeyboardDismissButton {
       constraints.append(contentsOf: [
@@ -206,6 +230,7 @@ class KeyboardToolbarView: NibLessView {
       iconButton.tintColor = style.toolbarButtonFrontColor
     }
     guruButton.tintColor = style.toolbarButtonFrontColor
+    emojiButton.tintColor = style.toolbarButtonFrontColor
     if keyboardContext.displayKeyboardDismissButton {
       dismissKeyboardButton.tintColor = style.toolbarButtonFrontColor
     }
@@ -274,6 +299,15 @@ class KeyboardToolbarView: NibLessView {
     actionHandler.handle(.release, on: .url(URL(string: "hamster://com.desgemini.guru/guru"), id: "openGuru"))
   }
 
+  @objc func emojiButtonTouchDownAction() {
+    emojiButton.backgroundColor = style.toolbarButtonPressedBackgroundColor
+  }
+
+  @objc func emojiButtonTouchUpAction() {
+    emojiButton.backgroundColor = style.toolbarButtonBackgroundColor
+    keyboardContext.setKeyboardType(.emojis)
+  }
+
   @objc func privacyButtonTouchDownAction() {
     privacyButton.backgroundColor = style.toolbarButtonPressedBackgroundColor
   }
@@ -288,6 +322,7 @@ class KeyboardToolbarView: NibLessView {
     dismissKeyboardButton.backgroundColor = style.toolbarButtonBackgroundColor
     iconButton.backgroundColor = style.toolbarButtonBackgroundColor
     guruButton.backgroundColor = style.toolbarButtonBackgroundColor
+    emojiButton.backgroundColor = style.toolbarButtonBackgroundColor
     privacyButton.backgroundColor = style.toolbarButtonBackgroundColor
   }
 }
