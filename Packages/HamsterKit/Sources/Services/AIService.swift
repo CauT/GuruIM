@@ -5,12 +5,18 @@ public enum AIProvider: String, Codable, CaseIterable {
   case openai      = "OpenAI"
   case openrouter  = "OpenRouter"
   case claude      = "Claude"
+  case kimi        = "Kimi"
+  case minimax     = "MiniMax"
+  case glm         = "GLM"
 
   public var baseURL: String {
     switch self {
     case .openai:     return "https://api.openai.com/v1"
     case .openrouter: return "https://openrouter.ai/api/v1"
     case .claude:     return "https://api.anthropic.com/v1"
+    case .kimi:       return "https://api.moonshot.cn/v1"
+    case .minimax:    return "https://api.minimax.chat/v1"
+    case .glm:        return "https://open.bigmodel.cn/api/paas/v4"
     }
   }
 
@@ -19,8 +25,14 @@ public enum AIProvider: String, Codable, CaseIterable {
     case .openai:     return "gpt-4o"
     case .openrouter: return "openai/gpt-4o"
     case .claude:     return "claude-opus-4-6"
+    case .kimi:       return "moonshot-v1-8k"
+    case .minimax:    return "abab6.5s-chat"
+    case .glm:        return "glm-4-flash"
     }
   }
+
+  /// 使用 OpenAI 兼容协议的提供商
+  public var isOpenAICompat: Bool { self != .claude }
 }
 
 /// AI Prompt 模板
@@ -133,10 +145,10 @@ public class AIService {
       return
     }
     switch provider {
-    case .openai, .openrouter:
-      chatOpenAICompat(messages: messages, provider: provider, apiKey: key, completion: completion)
     case .claude:
       chatClaude(messages: messages, apiKey: key, completion: completion)
+    default:
+      chatOpenAICompat(messages: messages, provider: provider, apiKey: key, completion: completion)
     }
   }
 

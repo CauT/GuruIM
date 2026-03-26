@@ -43,6 +43,15 @@ public enum SettingsSubView: String {
   case main
 
 
+  /// GURU 输入采集页面
+  case guru
+
+  /// 每日洞察页面
+  case autoInsight
+
+  /// 输入法设置汇总页面
+  case inputMethodSettings
+
   /// 空页面
   case none
 }

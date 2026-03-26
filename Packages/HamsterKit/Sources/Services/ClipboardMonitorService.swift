@@ -10,14 +10,19 @@ public class ClipboardMonitorService {
   private let encoder: JSONEncoder
   private let decoder: JSONDecoder
   private let writeQueue = DispatchQueue(label: "com.desgemini.clipboard.write", qos: .utility)
+  private let defaults = UserDefaults(suiteName: HamsterConstants.appGroupName)
 
-  /// 上次记录时的 changeCount，用于检测新变化
-  private var lastChangeCount: Int
+  /// 上次记录时的 changeCount，持久化到 UserDefaults，防止进程重启后漏采
+  /// 默认 -1 确保首次运行时总会触发一次检查
+  private var lastChangeCount: Int {
+    get { defaults?.object(forKey: "clipboard_last_change_count") as? Int ?? -1 }
+    set { defaults?.set(newValue, forKey: "clipboard_last_change_count") }
+  }
 
   /// 是否启用剪贴板监听
   public var isEnabled: Bool {
-    get { UserDefaults(suiteName: HamsterConstants.appGroupName)?.bool(forKey: "clipboardMonitorEnabled") ?? false }
-    set { UserDefaults(suiteName: HamsterConstants.appGroupName)?.set(newValue, forKey: "clipboardMonitorEnabled") }
+    get { defaults?.bool(forKey: "clipboardMonitorEnabled") ?? false }
+    set { defaults?.set(newValue, forKey: "clipboardMonitorEnabled") }
   }
 
   // MARK: - Paths
@@ -48,7 +53,6 @@ public class ClipboardMonitorService {
     encoder.dateEncodingStrategy = .iso8601
     decoder = JSONDecoder()
     decoder.dateDecodingStrategy = .iso8601
-    lastChangeCount = UIPasteboard.general.changeCount
     createDirectoriesIfNeeded()
   }
 

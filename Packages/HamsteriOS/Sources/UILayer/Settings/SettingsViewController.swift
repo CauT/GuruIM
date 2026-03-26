@@ -33,7 +33,7 @@ public class SettingsViewController: NibLessViewController {
 
 public extension SettingsViewController {
   override func loadView() {
-    title = "输入法设置"
+    title = "设置"
     view = SettingsRootView(settingsViewModel: settingsViewModel, rimeViewModel: rimeViewModel, backupViewModel: backupViewModel)
   }
 

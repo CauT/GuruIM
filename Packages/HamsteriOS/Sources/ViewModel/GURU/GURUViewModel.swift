@@ -29,6 +29,7 @@ class GURUViewModel: ObservableObject {
   @Published var isGoogleSyncing: Bool = false
   @Published var googleSyncProgress: Double = 0
   @Published var googleStatusMessage: String = ""
+  @Published var googleClientID: String = GoogleDriveService.shared.clientID
 
   // MARK: - AI State
 
@@ -111,9 +112,14 @@ class GURUViewModel: ObservableObject {
 
   // MARK: - Google Drive
 
+  func saveGoogleClientID(_ id: String) {
+    googleService.clientID = id
+    googleClientID = id
+  }
+
   func googleSignIn(anchor: ASPresentationAnchor) {
     guard googleService.isConfigured else {
-      googleStatusMessage = "请先在 HamsterConstants.swift 填入 Google OAuth Client ID"
+      googleStatusMessage = "请先填入 Google OAuth Client ID"
       return
     }
     googleStatusMessage = "正在打开 Google 登录..."

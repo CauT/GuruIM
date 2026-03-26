@@ -13,6 +13,7 @@ struct GURURootView: View {
   @State private var editingPrompt: AIPrompt?
   @State private var selectedPrompt: AIPrompt?
   @State private var includeGURU = true
+  @State private var clientIDInput: String = GoogleDriveService.shared.clientID
   @State private var includeClipboard = true
 
   var body: some View {
@@ -233,6 +234,20 @@ struct GURURootView: View {
         }
         .disabled(viewModel.isGoogleSyncing || viewModel.selectedDates.isEmpty)
       } else {
+        // Client ID 配置行
+        HStack {
+          TextField("OAuth Client ID", text: $clientIDInput)
+            .autocorrectionDisabled()
+            .autocapitalization(.none)
+            .font(.system(.footnote, design: .monospaced))
+          if !clientIDInput.isEmpty && clientIDInput != viewModel.googleClientID {
+            Button("保存") {
+              viewModel.saveGoogleClientID(clientIDInput)
+            }
+            .font(.subheadline)
+          }
+        }
+        // 登录按钮（配置后才启用）
         Button {
           guard let window = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene }).flatMap({ $0.windows })
@@ -241,6 +256,7 @@ struct GURURootView: View {
         } label: {
           Label("登录 Google 账号", systemImage: "person.badge.plus")
         }
+        .disabled(viewModel.googleClientID.isEmpty)
       }
       if !viewModel.googleStatusMessage.isEmpty {
         Text(viewModel.googleStatusMessage)
@@ -250,8 +266,13 @@ struct GURURootView: View {
     } header: {
       Text("Google Drive 同步")
     } footer: {
-      Text("同步 GURU 输入记录至 Google Drive / Hamster / GURU / 目录。首次使用请在 HamsterConstants.swift 填入 Google OAuth Client ID 并登录。")
-        .font(.caption)
+      VStack(alignment: .leading, spacing: 4) {
+        Text("同步 GURU 输入记录至 Google Drive / Hamster / GURU / 目录。")
+        if viewModel.googleDriveEmail == nil {
+          Text("首次使用：前往 Google Cloud Console → APIs & Services → Credentials，创建 **Web 应用** 类型的 OAuth 2.0 Client ID，在「已获授权的重定向 URI」中添加：\nhamster://oauth2redirect")
+        }
+      }
+      .font(.caption)
     }
   }
 

@@ -34,6 +34,12 @@ import UIKit
  您可能会注意到，KeyboardKit 自己的视图使用初始化器参数而非环境对象。这是有意为之，以便更好地传达每个视图的依赖关系。
  */
 open class KeyboardInputViewController: UIInputViewController, KeyboardController {
+  // MARK: - Clipboard Polling
+
+  /// 键盘显示期间的剪贴板轮询 timer，每 2 秒检查一次 changeCount
+  /// 只轮询 changeCount（整数），不读取内容，不触发隐私 banner；内容仅在 changeCount 变化时读取一次
+  private var clipboardTimer: Timer?
+
   // MARK: - View Controller Lifecycle ViewController 生命周期
 
   override open func viewDidLoad() {
@@ -54,6 +60,17 @@ open class KeyboardInputViewController: UIInputViewController, KeyboardControlle
     if GURUPrivacyService.shared.isCollectionEnabled {
       guruBeginSession()
       ClipboardMonitorService.shared.checkAndRecord()
+      // 键盘显示期间持续轮询剪贴板，捕获键盘可见时的复制操作
+      clipboardTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+        guard GURUPrivacyService.shared.isCollectionEnabled else { return }
+        ClipboardMonitorService.shared.checkAndRecord()
+      }
+      clipboardTimer?.tolerance = 0.5
+
+      // 每日洞察：满足间隔条件时后台触发 AI 分析
+      Task.detached(priority: .background) {
+        await AutoInsightService.shared.runIfNeeded()
+      }
     }
 
     // fix: 屏幕边缘按键触摸延迟
@@ -73,6 +90,8 @@ open class KeyboardInputViewController: UIInputViewController, KeyboardControlle
 
   override open func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
+    clipboardTimer?.invalidate()
+    clipboardTimer = nil
     // GURU: 键盘收起时保存本次 session
     guruFinalizeSession()
   }

@@ -28,6 +28,13 @@ public class SettingsRootView: NibLessView {
     return tableView
   }()
 
+  private lazy var featureHeader: FeatureCardsHeaderView = {
+    let header = FeatureCardsHeaderView()
+    header.guruAction = { [unowned self] in settingsViewModel.navigateToGuru() }
+    header.autoInsightAction = { [unowned self] in settingsViewModel.navigateToAutoInsight() }
+    return header
+  }()
+
   private var subscriptions = Set<AnyCancellable>()
 
   // MARK: method
@@ -44,9 +51,9 @@ public class SettingsRootView: NibLessView {
   }
 
   func setupView() {
-//    backgroundColor = UIColor.secondarySystemBackground
     constructViewHierarchy()
     activateViewConstraints()
+    installFeatureHeader()
   }
 
   override public func constructViewHierarchy() {
@@ -55,6 +62,29 @@ public class SettingsRootView: NibLessView {
 
   override public func activateViewConstraints() {
     tableView.fillSuperview()
+  }
+
+  private func installFeatureHeader() {
+    // tableHeaderView 需要在宽度确定后才能正确自适应高度
+    tableView.tableHeaderView = featureHeader
+    featureHeader.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      featureHeader.widthAnchor.constraint(equalTo: tableView.widthAnchor),
+    ])
+  }
+
+  override public func layoutSubviews() {
+    super.layoutSubviews()
+    // 让 tableHeaderView 根据约束自动算出正确高度
+    guard let header = tableView.tableHeaderView else { return }
+    let targetSize = CGSize(width: tableView.bounds.width, height: UIView.layoutFittingCompressedSize.height)
+    let height = header.systemLayoutSizeFitting(targetSize,
+      withHorizontalFittingPriority: .required,
+      verticalFittingPriority: .fittingSizeLevel).height
+    if abs(header.frame.height - height) > 1 {
+      header.frame.size.height = height
+      tableView.tableHeaderView = header // 触发 tableView 重新布局
+    }
   }
 
   func combine() {

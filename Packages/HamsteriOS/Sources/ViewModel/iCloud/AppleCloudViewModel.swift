@@ -5,6 +5,7 @@
 //  Created by morse on 2023/7/6.
 //
 
+import Combine
 import Foundation
 import HamsterKit
 import OSLog
@@ -12,7 +13,29 @@ import ProgressHUD
 import UIKit
 
 public class AppleCloudViewModel: ObservableObject {
+  public enum SyncState {
+    case idle
+    case syncing
+    case finished(success: Bool, message: String)
+  }
+
   public let settingsViewModel: SettingsViewModel
+
+  @Published public var syncState: SyncState = .idle
+
+  // MARK: - Last Sync Status (persisted in UserDefaults)
+
+  private let lastSyncTimeKey = "icloud_last_sync_time"
+  private let lastSyncSuccessKey = "icloud_last_sync_success"
+
+  public var lastSyncDescription: String {
+    guard let date = UserDefaults.standard.object(forKey: lastSyncTimeKey) as? Date else { return "" }
+    let success = UserDefaults.standard.bool(forKey: lastSyncSuccessKey)
+    let formatter = DateFormatter()
+    formatter.dateStyle = .short
+    formatter.timeStyle = .short
+    return (success ? "上次同步成功：" : "上次同步失败：") + formatter.string(from: date)
+  }
 
   public var regexOnCopyFile: String {
     get {
@@ -37,13 +60,10 @@ public class AppleCloudViewModel: ObservableObject {
       text: "拷贝应用文件至iCloud",
       type: .button,
       buttonAction: { [unowned self] in
-        Task {
-          await copyFileToiCloud()
-        }
+        Task { await copyFileToiCloud() }
       }
     ),
     .init(
-      //      icon: UIImage(systemName: "square.and.pencil"),
       text: "正则过滤",
       textValue: { [unowned self] in regexOnCopyFile },
       textHandled: { [unowned self] in
@@ -57,15 +77,22 @@ public class AppleCloudViewModel: ObservableObject {
   }
 
   func copyFileToiCloud() async {
+    await MainActor.run { syncState = .syncing }
+    await ProgressHUD.animate("拷贝中……", interaction: false)
     do {
-      await ProgressHUD.animate("拷贝中……", interaction: false)
       let regexList = regexOnCopyFile.split(separator: ",").map { String($0) }
       try FileManager.copySandboxSharedSupportDirectoryToAppleCloud(regexList)
       try FileManager.copySandboxUserDataDirectoryToAppleCloud(regexList)
-      await ProgressHUD.success("拷贝成功", interaction: false, delay: 1.5)
+      UserDefaults.standard.set(Date(), forKey: lastSyncTimeKey)
+      UserDefaults.standard.set(true, forKey: lastSyncSuccessKey)
+      await ProgressHUD.dismiss()
+      await MainActor.run { syncState = .finished(success: true, message: "文件已成功拷贝至 iCloud") }
     } catch {
       Logger.statistics.error("apple cloud copy to iCloud error: \(error)")
-      await ProgressHUD.failed("拷贝失败: \(error.localizedDescription)", interaction: false, delay: 1.5)
+      UserDefaults.standard.set(Date(), forKey: lastSyncTimeKey)
+      UserDefaults.standard.set(false, forKey: lastSyncSuccessKey)
+      await ProgressHUD.dismiss()
+      await MainActor.run { syncState = .finished(success: false, message: error.localizedDescription) }
     }
   }
 }

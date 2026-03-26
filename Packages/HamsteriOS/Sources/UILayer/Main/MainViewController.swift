@@ -21,6 +21,9 @@ protocol SubViewControllerFactory {
   func makeBackupViewController() -> BackupViewController
   func makeAboutViewController() -> AboutViewController
   func makeRimeViewController() -> RimeViewController
+  func makeGURUViewController() -> GURUViewController
+  func makeAutoInsightViewController() -> AutoInsightViewController
+  func makeInputMethodSettingsViewController() -> InputMethodSettingsViewController
 }
 
 open class MainViewController: UISplitViewController {
@@ -54,6 +57,15 @@ open class MainViewController: UISplitViewController {
 
   private lazy var iCloudViewController: AppleCloudViewController
     = subViewControllerFactory.makeAppleCloudViewController()
+
+  private lazy var guruViewController: GURUViewController
+    = subViewControllerFactory.makeGURUViewController()
+
+  private lazy var autoInsightViewController: AutoInsightViewController
+    = subViewControllerFactory.makeAutoInsightViewController()
+
+  private lazy var inputMethodSettingsViewController: InputMethodSettingsViewController
+    = subViewControllerFactory.makeInputMethodSettingsViewController()
 
   private lazy var aboutViewController: AboutViewController
     = subViewControllerFactory.makeAboutViewController()
@@ -157,6 +169,12 @@ extension MainViewController {
       presentBackupViewController()
     case .iCloud:
       presentAppleCloudViewController()
+    case .guru:
+      presentGURUViewController()
+    case .autoInsight:
+      presentAutoInsightViewController()
+    case .inputMethodSettings:
+      presentInputMethodSettingsViewController()
     case .about:
       presentAboutViewController()
     case .main:
@@ -204,6 +222,18 @@ extension MainViewController {
 
   func presentAppleCloudViewController() {
     presentViewController(iCloudViewController)
+  }
+
+  func presentGURUViewController() {
+    presentViewController(guruViewController)
+  }
+
+  func presentAutoInsightViewController() {
+    presentViewController(autoInsightViewController)
+  }
+
+  func presentInputMethodSettingsViewController() {
+    presentViewController(inputMethodSettingsViewController)
   }
 
   func presentAboutViewController() {

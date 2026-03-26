@@ -345,4 +345,21 @@ extension HamsterAppDependencyContainer: SubViewControllerFactory {
     )
     return aboutViewController
   }
+
+  func makeGURUViewController() -> GURUViewController {
+    return GURUViewController()
+  }
+
+  func makeAutoInsightViewController() -> AutoInsightViewController {
+    return AutoInsightViewController()
+  }
+
+  func makeInputMethodSettingsViewController() -> InputMethodSettingsViewController {
+    return InputMethodSettingsViewController(
+      mainViewModel: mainViewModel,
+      enableColorSchema: { [weak self] in
+        self?.settingsViewModel.enableColorSchema ?? false
+      }
+    )
+  }
 }

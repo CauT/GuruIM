@@ -52,6 +52,10 @@ class AppleCloudRootView: NibLessView {
     UIPasteboard.general.string = Self.clipboardOnCopyToCloudFilterRegexRemark
     ProgressHUD.success("复制成功", delay: 1.5)
   }
+
+  func reloadSyncStatus() {
+    tableView.reloadSections(IndexSet(integer: 1), with: .none)
+  }
 }
 
 extension AppleCloudRootView {
@@ -68,7 +72,9 @@ extension AppleCloudRootView: UITableViewDelegate {
     case 0:
       return TableFooterView(footer: Self.enableAppleCloudRemark)
     case 1:
-      return TableFooterView(footer: Self.copyRemark)
+      let lastSync = viewModel.lastSyncDescription
+      let footer = lastSync.isEmpty ? Self.copyRemark : Self.copyRemark + "\n\(lastSync)"
+      return TableFooterView(footer: footer)
     case 2:
       let footerView = TableFooterView(footer: Self.regexRemark)
       let gesture = UITapGestureRecognizer(target: self, action: #selector(copyRegex))

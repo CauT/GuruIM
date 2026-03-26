@@ -14,9 +14,18 @@ public class GoogleDriveService: NSObject {
 
   private let defaults = UserDefaults(suiteName: HamsterConstants.appGroupName)
 
-  public var isConfigured: Bool {
-    !HamsterConstants.googleOAuthClientID.hasPrefix("YOUR_")
+  // MARK: - Client ID（用户通过 UI 配置，存 UserDefaults）
+
+  private let clientIDKey = "gdrive_client_id"
+  private let fixedRedirectURI = "hamster://oauth2redirect"
+  private let callbackScheme = "hamster"
+
+  public var clientID: String {
+    get { defaults?.string(forKey: clientIDKey) ?? "" }
+    set { defaults?.set(newValue.trimmingCharacters(in: .whitespacesAndNewlines), forKey: clientIDKey) }
   }
+
+  public var isConfigured: Bool { !clientID.isEmpty }
 
   public var isSignedIn: Bool { refreshToken != nil }
 
@@ -54,8 +63,8 @@ public class GoogleDriveService: NSObject {
     let state = UUID().uuidString
     var comps = URLComponents(string: "https://accounts.google.com/o/oauth2/v2/auth")!
     comps.queryItems = [
-      .init(name: "client_id", value: HamsterConstants.googleOAuthClientID),
-      .init(name: "redirect_uri", value: "\(HamsterConstants.googleRedirectScheme):/oauth2redirect"),
+      .init(name: "client_id", value: clientID),
+      .init(name: "redirect_uri", value: fixedRedirectURI),
       .init(name: "response_type", value: "code"),
       .init(name: "scope", value: "\(driveScope) \(profileScope)"),
       .init(name: "access_type", value: "offline"),
@@ -70,7 +79,7 @@ public class GoogleDriveService: NSObject {
     anchorProvider = provider
     let session = ASWebAuthenticationSession(
       url: url,
-      callbackURLScheme: HamsterConstants.googleRedirectScheme
+      callbackURLScheme: callbackScheme
     ) { [weak self] callbackURL, error in
       if let error = error {
         if (error as NSError).code == ASWebAuthenticationSessionError.canceledLogin.rawValue {
@@ -108,8 +117,8 @@ public class GoogleDriveService: NSObject {
     request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
     let params: [String: String] = [
       "code": code,
-      "client_id": HamsterConstants.googleOAuthClientID,
-      "redirect_uri": "\(HamsterConstants.googleRedirectScheme):/oauth2redirect",
+      "client_id": clientID,
+      "redirect_uri": fixedRedirectURI,
       "grant_type": "authorization_code",
     ]
     request.httpBody = params
@@ -154,7 +163,7 @@ public class GoogleDriveService: NSObject {
     request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
     let params: [String: String] = [
       "refresh_token": refresh,
-      "client_id": HamsterConstants.googleOAuthClientID,
+      "client_id": clientID,
       "grant_type": "refresh_token",
     ]
     request.httpBody = params
@@ -425,7 +434,7 @@ public class GoogleDriveService: NSObject {
 
     public var errorDescription: String? {
       switch self {
-      case .notConfigured: return "请先在 HamsterConstants.swift 填入 Google OAuth Client ID"
+      case .notConfigured: return "请先在设置中填入 Google OAuth Client ID"
       case .authFailed: return "Google 授权失败"
       case .cancelled: return "已取消登录"
       case .notSignedIn: return "未登录 Google 账号"

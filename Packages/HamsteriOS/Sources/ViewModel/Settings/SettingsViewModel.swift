@@ -44,6 +44,11 @@ public class SettingsViewModel: ObservableObject {
     }
   }
 
+  func navigateToGuru() { mainViewModel.subViewSubject.send(.guru) }
+  func navigateToICloud() { mainViewModel.subViewSubject.send(.iCloud) }
+  func navigateToAutoInsight() { mainViewModel.subViewSubject.send(.autoInsight) }
+  func navigateToInputMethodSettings() { mainViewModel.subViewSubject.send(.inputMethodSettings) }
+
   var tableReloadSubject = PassthroughSubject<Bool, Never>()
   var tableReloadPublished: AnyPublisher<Bool, Never> {
     tableReloadSubject.eraseToAnyPublisher()
@@ -103,85 +108,63 @@ public class SettingsViewModel: ObservableObject {
   /// 设置选项
   public lazy var sections: [SettingSectionModel] = {
     let sections = [
-      SettingSectionModel(title: "输入相关", items: [
+      SettingSectionModel(title: "Now Guru", items: [
         .init(
-          icon: UIImage(systemName: "highlighter")!.withTintColor(.yellow),
-          text: "输入方案设置",
+          icon: UIImage(systemName: "brain.head.profile")!.withTintColor(.systemPurple),
+          text: "数据采集与管理",
           accessoryType: .disclosureIndicator,
           navigationAction: { [unowned self] in
-            self.mainViewModel.subViewSubject.send(.inputSchema)
+            self.mainViewModel.subViewSubject.send(.guru)
           }
         ),
         .init(
-          icon: UIImage(systemName: "wifi")!,
-          text: "Wi-Fi上传方案",
+          icon: UIImage(systemName: "doc.on.clipboard")!.withTintColor(.systemTeal),
+          text: "剪贴板监听",
           accessoryType: .disclosureIndicator,
           navigationAction: { [unowned self] in
-            self.mainViewModel.subViewSubject.send(.uploadInputSchema)
+            self.mainViewModel.subViewSubject.send(.guru)
           }
         ),
         .init(
-          icon: UIImage(systemName: "folder")!,
-          text: "文件管理",
+          icon: UIImage(systemName: "cpu")!.withTintColor(.systemIndigo),
+          text: "AI 分析",
           accessoryType: .disclosureIndicator,
           navigationAction: { [unowned self] in
-            self.mainViewModel.subViewSubject.send(.finder)
+            self.mainViewModel.subViewSubject.send(.guru)
+          }
+        ),
+        .init(
+          icon: UIImage(systemName: "icloud.and.arrow.up")!.withTintColor(.systemBlue),
+          text: "Google Drive 同步",
+          accessoryType: .disclosureIndicator,
+          navigationAction: { [unowned self] in
+            self.mainViewModel.subViewSubject.send(.guru)
+          }
+        ),
+        .init(
+          icon: UIImage(systemName: "lock.shield")!.withTintColor(.systemGreen),
+          text: "隐私保护",
+          accessoryType: .disclosureIndicator,
+          navigationAction: { [unowned self] in
+            self.mainViewModel.subViewSubject.send(.guru)
+          }
+        ),
+        .init(
+          icon: UIImage(systemName: "sparkles")!.withTintColor(.systemOrange),
+          text: "每日洞察",
+          accessoryType: .disclosureIndicator,
+          navigationAction: { [unowned self] in
+            self.mainViewModel.subViewSubject.send(.autoInsight)
           }
         ),
       ]),
-      SettingSectionModel(title: "键盘相关", items: [
+      SettingSectionModel(title: "输入法", items: [
         .init(
           icon: UIImage(systemName: "keyboard")!,
-          text: "键盘设置",
+          text: "输入法设置",
           accessoryType: .disclosureIndicator,
           navigationAction: { [unowned self] in
-            self.mainViewModel.subViewSubject.send(.keyboardSettings)
-          }
-        ),
-        .init(
-          icon: UIImage(systemName: "paintpalette")!,
-          text: "键盘配色",
-          accessoryType: .disclosureIndicator,
-          navigationLinkLabel: { [unowned self] in enableColorSchema ? "启用" : "禁用" },
-          navigationAction: { [unowned self] in
-            self.mainViewModel.subViewSubject.send(.colorSchema)
-          }
-        ),
-        .init(
-          icon: UIImage(systemName: "speaker.wave.3")!,
-          text: "按键音与震动",
-          accessoryType: .disclosureIndicator,
-          navigationAction: { [unowned self] in
-            self.mainViewModel.subViewSubject.send(.feedback)
-          }
-        ),
-      ]),
-      SettingSectionModel(title: "同步与备份", items: [
-        .init(
-          icon: UIImage(systemName: "externaldrive.badge.icloud")!,
-          text: "iCloud同步",
-          accessoryType: .disclosureIndicator,
-          navigationLinkLabel: { [unowned self] in enableAppleCloud ? "启用" : "禁用" },
-          navigationAction: { [unowned self] in
-            self.mainViewModel.subViewSubject.send(.iCloud)
-          }
-        ),
-        .init(
-          icon: UIImage(systemName: "externaldrive.badge.timemachine")!,
-          text: "软件备份",
-          accessoryType: .disclosureIndicator,
-          navigationAction: { [unowned self] in
-            self.mainViewModel.subViewSubject.send(.backup)
-          }
-        ),
-      ]),
-      .init(title: "RIME", items: [
-        .init(
-          icon: UIImage(systemName: "r.square")!,
-          text: "RIME",
-          accessoryType: .disclosureIndicator,
-          navigationAction: { [unowned self] in
-            self.mainViewModel.subViewSubject.send(.rime)
+            self.mainViewModel.subViewSubject.send(.inputMethodSettings)
           }
         ),
       ]),
