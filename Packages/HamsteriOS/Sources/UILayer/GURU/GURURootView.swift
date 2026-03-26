@@ -401,6 +401,13 @@ struct GURURootView: View {
           Text(entry.preview).font(.caption).lineLimit(2)
         }
         .padding(.vertical, 2)
+        .swipeActions(edge: .trailing) {
+          Button(role: .destructive) {
+            viewModel.deleteClipboardEntry(id: entry.id)
+          } label: {
+            Label("删除", systemImage: "trash")
+          }
+        }
       }
     } header: {
       Text("最近剪贴板（今日）")
@@ -427,6 +434,13 @@ struct GURURootView: View {
                 .font(.caption2).foregroundColor(.secondary)
               }
               .padding(.vertical, 2)
+              .swipeActions(edge: .trailing) {
+                Button(role: .destructive) {
+                  viewModel.deleteEntry(id: entry.id)
+                } label: {
+                  Label("删除", systemImage: "trash")
+                }
+              }
             }
           }
         }

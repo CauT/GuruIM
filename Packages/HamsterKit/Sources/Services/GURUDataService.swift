@@ -115,6 +115,17 @@ public class GURUDataService {
 
   // MARK: - Delete
 
+  public func deleteEntry(id: UUID, for date: Date) {
+    guard let url = dailyFileURL(for: date) else { return }
+    let remaining = entries(for: date).filter { $0.id != id }
+    if remaining.isEmpty {
+      try? fileManager.removeItem(at: url)
+    } else {
+      let lines = remaining.compactMap { try? encoder.encode($0) }.compactMap { String(data: $0, encoding: .utf8) }
+      try? lines.joined(separator: "\n").write(to: url, atomically: true, encoding: .utf8)
+    }
+  }
+
   public func deleteEntries(for date: Date) {
     guard let url = dailyFileURL(for: date) else { return }
     try? fileManager.removeItem(at: url)

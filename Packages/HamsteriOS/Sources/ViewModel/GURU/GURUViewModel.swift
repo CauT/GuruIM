@@ -182,6 +182,20 @@ class GURUViewModel: ObservableObject {
   func deleteDate(_ date: Date) { service.deleteEntries(for: date); reload() }
   func deleteSelected() { selectedDates.forEach { service.deleteEntries(for: $0) }; reload() }
 
+  func deleteEntry(id: UUID) {
+    guard let date = previewDate else { return }
+    service.deleteEntry(id: id, for: date)
+    previewEntries.removeAll { $0.id == id }
+    totalEntryCount = service.totalEntryCount()
+  }
+
+  func deleteClipboardEntry(id: UUID) {
+    guard let date = clipboardService.availableDates().first else { return }
+    clipboardService.deleteEntry(id: id, for: date)
+    clipboardPreviewEntries.removeAll { $0.id == id }
+    clipboardEntryCount = clipboardService.totalEntryCount()
+  }
+
   // MARK: - AI
 
   func setProvider(_ provider: AIProvider) {

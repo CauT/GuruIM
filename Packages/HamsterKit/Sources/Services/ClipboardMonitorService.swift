@@ -159,6 +159,24 @@ public class ClipboardMonitorService {
 
   // MARK: - Delete
 
+  public func deleteEntry(id: UUID, for date: Date) {
+    guard let url = dailyFileURL(for: date) else { return }
+    let all = entries(for: date)
+    // 删除该条目引用的图片
+    if let entry = all.first(where: { $0.id == id }), let filename = entry.imageFilename {
+      if let imgURL = imagesURL?.appendingPathComponent(filename) {
+        try? fileManager.removeItem(at: imgURL)
+      }
+    }
+    let remaining = all.filter { $0.id != id }
+    if remaining.isEmpty {
+      try? fileManager.removeItem(at: url)
+    } else {
+      let lines = remaining.compactMap { try? encoder.encode($0) }.compactMap { String(data: $0, encoding: .utf8) }
+      try? lines.joined(separator: "\n").write(to: url, atomically: true, encoding: .utf8)
+    }
+  }
+
   public func deleteEntries(for date: Date) {
     // 同时删除当天引用的图片文件
     entries(for: date).compactMap(\.imageFilename).forEach { filename in
