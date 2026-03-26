@@ -2,6 +2,29 @@ import HamsterKit
 import SwiftUI
 import UIKit
 
+// MARK: - Date formatting helpers
+
+private let dayFormatter: DateFormatter = {
+  let f = DateFormatter()
+  f.dateStyle = .medium
+  f.timeStyle = .none
+  return f
+}()
+
+private let longDayFormatter: DateFormatter = {
+  let f = DateFormatter()
+  f.dateStyle = .long
+  f.timeStyle = .none
+  return f
+}()
+
+private let timeFormatter: DateFormatter = {
+  let f = DateFormatter()
+  f.dateStyle = .none
+  f.timeStyle = .short
+  return f
+}()
+
 // MARK: - Root / List
 
 public struct AutoInsightRootView: View {
@@ -12,7 +35,7 @@ public struct AutoInsightRootView: View {
   public init() {}
 
   public var body: some View {
-    NavigationStack {
+    NavigationView {
       Group {
         if viewModel.results.isEmpty {
           emptyState
@@ -23,13 +46,14 @@ public struct AutoInsightRootView: View {
       .navigationTitle("每日洞察")
       .navigationBarTitleDisplayMode(.large)
       .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: .navigationBarTrailing) {
           Button { showSettings = true } label: {
             Image(systemName: "gearshape")
           }
         }
       }
     }
+    .navigationViewStyle(.stack)
     .sheet(item: $selectedResult) { result in
       AutoInsightDetailView(result: result, viewModel: viewModel)
         .onDisappear { viewModel.reload() }
@@ -47,9 +71,7 @@ public struct AutoInsightRootView: View {
     VStack(spacing: 20) {
       Image(systemName: "sparkles")
         .font(.system(size: 56))
-        .foregroundStyle(
-          LinearGradient(colors: [.purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing)
-        )
+        .foregroundColor(.purple)
 
       Text("每日洞察")
         .font(.title2.bold())
@@ -105,16 +127,16 @@ private struct ResultRowView: View {
             .fill(.purple)
             .frame(width: 7, height: 7)
         }
-        Text(result.date.formatted(date: .abbreviated, time: .omitted))
+        Text(dayFormatter.string(from: result.date))
           .font(.caption.bold())
           .foregroundColor(.secondary)
-        Text(result.date.formatted(date: .omitted, time: .shortened))
+        Text(timeFormatter.string(from: result.date))
           .font(.caption)
           .foregroundColor(.secondary)
         Spacer()
         Text("分析了 \(result.entriesCount) 条")
           .font(.caption2)
-          .foregroundColor(.tertiary)
+          .foregroundColor(Color(uiColor: .tertiaryLabel))
       }
 
       HStack(alignment: .top, spacing: 12) {
@@ -156,19 +178,19 @@ public struct AutoInsightDetailView: View {
   @State private var showDeleteAlert = false
 
   public var body: some View {
-    NavigationStack {
+    NavigationView {
       ScrollView {
         VStack(spacing: 24) {
           // 日期 + 统计
           VStack(spacing: 4) {
-            Text(result.date.formatted(date: .long, time: .omitted))
+            Text(longDayFormatter.string(from: result.date))
               .font(.headline)
-            Text(result.date.formatted(date: .omitted, time: .shortened))
+            Text(timeFormatter.string(from: result.date))
               .font(.subheadline)
               .foregroundColor(.secondary)
             Text("基于 \(result.entriesCount) 条输入记录生成")
               .font(.caption)
-              .foregroundColor(.tertiary)
+              .foregroundColor(Color(uiColor: .tertiaryLabel))
               .padding(.top, 2)
           }
           .padding(.top, 8)
@@ -196,10 +218,10 @@ public struct AutoInsightDetailView: View {
       .navigationTitle("每日洞察")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .topBarLeading) {
+        ToolbarItem(placement: .navigationBarLeading) {
           Button("关闭") { dismiss() }
         }
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: .navigationBarTrailing) {
           Button(role: .destructive) { showDeleteAlert = true } label: {
             Image(systemName: "trash")
               .foregroundColor(.red)
@@ -207,6 +229,7 @@ public struct AutoInsightDetailView: View {
         }
       }
     }
+    .navigationViewStyle(.stack)
     .sheet(item: Binding(
       get: { shareItems.map(ShareItemsWrapper.init) },
       set: { if $0 == nil { shareItems = nil } }
@@ -285,7 +308,7 @@ public struct AutoInsightSettingsView: View {
   ]
 
   public var body: some View {
-    NavigationStack {
+    NavigationView {
       Form {
         // 开关
         Section {
@@ -311,7 +334,7 @@ public struct AutoInsightSettingsView: View {
           ZStack(alignment: .topLeading) {
             if viewModel.personalBackground.isEmpty {
               Text("例如：我是一名产品经理，平时关注效率和团队管理…")
-                .foregroundColor(.tertiaryLabel)
+                .foregroundColor(Color(uiColor: .tertiaryLabel))
                 .font(.subheadline)
                 .padding(.top, 8)
                 .padding(.leading, 4)
@@ -352,15 +375,16 @@ public struct AutoInsightSettingsView: View {
       .navigationTitle("每日洞察设置")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: .navigationBarTrailing) {
           Button("完成") {
             viewModel.saveConfig()
             dismiss()
           }
-          .bold()
+          .font(.body.bold())
         }
       }
     }
+    .navigationViewStyle(.stack)
   }
 }
 
@@ -380,7 +404,7 @@ private struct PromptEditorPage: View {
     .navigationTitle(title)
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
-      ToolbarItem(placement: .topBarTrailing) {
+      ToolbarItem(placement: .navigationBarTrailing) {
         Button("恢复默认") { text = defaultText }
           .font(.subheadline)
       }
