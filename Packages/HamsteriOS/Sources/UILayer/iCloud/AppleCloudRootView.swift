@@ -123,7 +123,7 @@ extension AppleCloudRootView: UITableViewDataSource {
 
 extension AppleCloudRootView {
   static let enableAppleCloudRemark = """
-  1. 启用后，“重新部署”会复制iCloud中仓输入法`RIME`文件夹下全部文件；
+  1. 启用后，“重新部署”会复制iCloud中咕噜输入法`RIME`文件夹下全部文件；
   2. 复制时，差异文件会被覆盖；
   """
 

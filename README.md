@@ -1,4 +1,4 @@
-# Hamster / 仓输入法
+# Hamster / 咕噜输入法
 
 基于 [RIME 中州韻輸入法引擎](https://github.com/rime/librime) 的 iOS 输入法，集成 Now Guru 智能助手功能。
 

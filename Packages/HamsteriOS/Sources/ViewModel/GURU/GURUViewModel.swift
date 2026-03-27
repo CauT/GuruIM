@@ -196,6 +196,12 @@ class GURUViewModel: ObservableObject {
     clipboardEntryCount = clipboardService.totalEntryCount()
   }
 
+  func clearAllClipboardEntries() {
+    clipboardService.deleteAllEntries()
+    clipboardPreviewEntries.removeAll()
+    clipboardEntryCount = 0
+  }
+
   // MARK: - AI
 
   func setProvider(_ provider: AIProvider) {

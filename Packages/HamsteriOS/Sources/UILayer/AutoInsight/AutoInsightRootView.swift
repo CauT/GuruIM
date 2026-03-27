@@ -76,7 +76,7 @@ public struct AutoInsightRootView: View {
       Text("每日洞察")
         .font(.title2.bold())
 
-      Text("开启后，仓输入法将定时自动分析你的输入记录，\n生成心灵陪伴与事务指导，通过通知提醒你查看。")
+      Text("开启后，咕噜输入法将定时自动分析你的输入记录，\n生成心灵陪伴与事务指导，通过通知提醒你查看。")
         .font(.subheadline)
         .foregroundColor(.secondary)
         .multilineTextAlignment(.center)
@@ -315,7 +315,52 @@ public struct AutoInsightSettingsView: View {
           Toggle("启用每日洞察", isOn: $viewModel.isEnabled)
             .tint(.purple)
         } footer: {
-          Text("开启后，输入法每隔设定时间自动分析输入记录，发送本地通知提醒你查看。需要先在 Now Guru 中配置好 AI 提供商与 API Key。")
+          Text("开启后，输入法每隔设定时间自动分析输入记录，发送本地通知提醒你查看。")
+        }
+
+        // AI 配置
+        Section {
+          // Provider 选择
+          ForEach(AIProvider.allCases, id: \.rawValue) { provider in
+            HStack {
+              Text(provider.rawValue)
+              Spacer()
+              if viewModel.aiSelectedProvider == provider {
+                Image(systemName: "checkmark").foregroundColor(.accentColor)
+              }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture { viewModel.setProvider(provider) }
+          }
+
+          // 模型名称
+          HStack {
+            Text("模型")
+            Spacer()
+            TextField(viewModel.aiSelectedProvider.defaultModel, text: Binding(
+              get: { viewModel.aiSelectedModel },
+              set: { viewModel.setModel($0) }
+            ))
+            .multilineTextAlignment(.trailing)
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.never)
+            .foregroundColor(.secondary)
+          }
+        } header: {
+          Text("AI 提供商")
+        } footer: {
+          Text("洞察功能需要 AI 后端。选择提供商并填入 API Key 后才能正常使用。")
+        }
+
+        // API Key
+        Section("API Key") {
+          InsightSecureKeyField(
+            label: viewModel.aiSelectedProvider.rawValue,
+            placeholder: "填入 API Key",
+            key: viewModel.apiKey(for: viewModel.aiSelectedProvider)
+          ) {
+            viewModel.setAPIKey($0, for: viewModel.aiSelectedProvider)
+          }
         }
 
         // 间隔
@@ -436,6 +481,35 @@ private struct ShareButton: View {
       .background(color.opacity(0.1))
       .cornerRadius(10)
     }
+  }
+}
+
+private struct InsightSecureKeyField: View {
+  let label: String
+  let placeholder: String
+  let key: String
+  let onSave: (String) -> Void
+
+  @State private var text: String = ""
+  @State private var isRevealed = false
+
+  var body: some View {
+    HStack {
+      if isRevealed {
+        TextField(placeholder, text: $text)
+          .autocorrectionDisabled()
+          .textInputAutocapitalization(.never)
+          .onChange(of: text) { onSave($0) }
+      } else {
+        SecureField(placeholder, text: $text)
+          .onChange(of: text) { onSave($0) }
+      }
+      Button { isRevealed.toggle() } label: {
+        Image(systemName: isRevealed ? "eye.slash" : "eye").foregroundColor(.secondary)
+      }
+      .buttonStyle(.plain)
+    }
+    .onAppear { text = key }
   }
 }
 

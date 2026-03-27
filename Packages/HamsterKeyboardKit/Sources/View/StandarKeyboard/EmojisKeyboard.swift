@@ -22,14 +22,21 @@ class EmojisKeyboard: NibLessView {
   /// 当前显示的 emoji 列表
   private var currentEmojis: [Emoji] = []
 
+  /// 上次布局宽度，用于检测宽度变化时刷新 cell 尺寸
+  private var lastLayoutWidth: CGFloat = 0
+
   // MARK: - Subviews
 
-  private lazy var collectionView: UICollectionView = {
+  private lazy var flowLayout: UICollectionViewFlowLayout = {
     let layout = UICollectionViewFlowLayout()
     layout.minimumInteritemSpacing = 4
     layout.minimumLineSpacing = 4
     layout.sectionInset = UIEdgeInsets(top: 4, left: 8, bottom: 4, right: 8)
-    let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
+    return layout
+  }()
+
+  private lazy var collectionView: UICollectionView = {
+    let cv = UICollectionView(frame: .zero, collectionViewLayout: flowLayout)
     cv.translatesAutoresizingMaskIntoConstraints = false
     cv.backgroundColor = .clear
     cv.dataSource = self
@@ -132,6 +139,24 @@ class EmojisKeyboard: NibLessView {
     ])
   }
 
+  // MARK: - Layout
+
+  override var intrinsicContentSize: CGSize {
+    // 与标准键盘高度保持一致：4 行按键的高度
+    let config = KeyboardLayoutConfiguration.standard(for: keyboardContext)
+    let rowHeight = config.rowHeight
+    let rows: CGFloat = 4
+    return CGSize(width: UIView.noIntrinsicMetric, height: rowHeight * rows)
+  }
+
+  override func layoutSubviews() {
+    super.layoutSubviews()
+    if bounds.width != lastLayoutWidth && bounds.width > 0 {
+      lastLayoutWidth = bounds.width
+      flowLayout.invalidateLayout()
+    }
+  }
+
   // MARK: - Data
 
   private func reloadEmojis() {
@@ -199,7 +224,9 @@ extension EmojisKeyboard: UICollectionViewDelegateFlowLayout {
     let columns: CGFloat = 8
     let spacing: CGFloat = 4
     let insets: CGFloat = 16 // 8 left + 8 right
-    let width = (collectionView.bounds.width - insets - spacing * (columns - 1)) / columns
+    let availableWidth = collectionView.bounds.width - insets - spacing * (columns - 1)
+    guard availableWidth > 0 else { return CGSize(width: 36, height: 36) }
+    let width = floor(availableWidth / columns)
     return CGSize(width: width, height: width)
   }
 }

@@ -27,7 +27,7 @@ class KeyboardToolbarView: NibLessView {
   private var oldBounds: CGRect = .zero
   private var subscriptions = Set<AnyCancellable>()
 
-  /// 常用功能项: 仓输入法App
+  /// 常用功能项: 咕噜输入法App
   lazy var iconButton: UIButton = {
     let button = UIButton(type: .custom)
     button.translatesAutoresizingMaskIntoConstraints = false

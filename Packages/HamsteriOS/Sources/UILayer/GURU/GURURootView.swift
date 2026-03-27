@@ -15,6 +15,7 @@ struct GURURootView: View {
   @State private var includeGURU = true
   @State private var clientIDInput: String = GoogleDriveService.shared.clientID
   @State private var includeClipboard = true
+  @State private var showClearClipboardAlert = false
 
   var body: some View {
     List {
@@ -28,7 +29,7 @@ struct GURURootView: View {
       // 日期列表
       Section {
         if viewModel.availableDates.isEmpty {
-          Text("暂无采集数据\n使用仓输入法打字后将在此显示")
+          Text("暂无采集数据\n使用咕噜输入法打字后将在此显示")
             .font(.subheadline)
             .foregroundColor(.secondary)
             .multilineTextAlignment(.center)
@@ -115,6 +116,12 @@ struct GURURootView: View {
       Button("取消", role: .cancel) {}
     } message: {
       Text("删除已选 \(viewModel.selectedDates.count) 天的本地记录？iCloud 中的数据不受影响。")
+    }
+    .alert("清空剪贴板", isPresented: $showClearClipboardAlert) {
+      Button("清空", role: .destructive) { viewModel.clearAllClipboardEntries() }
+      Button("取消", role: .cancel) {}
+    } message: {
+      Text("删除所有剪贴板记录？此操作不可恢复。")
     }
     .onAppear { viewModel.reload() }
   }
@@ -380,11 +387,17 @@ struct GURURootView: View {
           Text("\(viewModel.clipboardEntryCount) 条").foregroundColor(.secondary)
         }
         .font(.subheadline)
+
+        if viewModel.clipboardEntryCount > 0 {
+          Button(role: .destructive) { showClearClipboardAlert = true } label: {
+            Label("清空剪贴板记录", systemImage: "trash")
+          }
+        }
       }
     } header: {
       Text("剪贴板")
     } footer: {
-      Text("开启后，每次使用仓输入法时将自动记录剪贴板新增内容（文字、图片、Emoji），含时间戳与类型标注。")
+      Text("开启后，每次使用咕噜输入法时将自动记录剪贴板新增内容（文字、图片、Emoji），含时间戳与类型标注。")
         .font(.caption)
     }
   }
@@ -497,7 +510,7 @@ struct GURURootView: View {
 
   var helpText: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text("• 仓输入法在使用过程中自动采集您的输入（RIME 上屏词汇及英文单词）")
+      Text("• 咕噜输入法在使用过程中自动采集您的输入（RIME 上屏词汇及英文单词）")
       Text("• 数据保存在本机私有空间，不会自动上传")
       Text("• 支持上传到 iCloud Drive / 同步到 Google Drive")
       Text("• 开启剪贴板监听后记录文字、图片、Emoji 类型")
