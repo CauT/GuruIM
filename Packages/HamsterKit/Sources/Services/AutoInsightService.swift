@@ -179,6 +179,7 @@ public class AutoInsightService {
 
     let (clipboardText, clipboardRefs) = loadClipboardData(sinceMinutes: cfg.intervalMinutes)
     let clipCount = clipboardText.components(separatedBy: "\n").filter { !$0.isEmpty }.count
+    log.log("剪贴板数据 \(clipCount) 条（监听开关：\(ClipboardMonitorService.shared.isEnabled ? "开" : "关")）", tag: "AutoInsight")
 
     guard !guruText.isEmpty || !clipboardText.isEmpty else {
       log.log("无 GURU 及剪贴板数据，跳过本次分析", level: .warn, tag: "AutoInsight")
@@ -294,8 +295,8 @@ public class AutoInsightService {
   }
 
   /// 加载剪贴板数据，返回 (文本, [(id, date)]) 用于成功后清除
+  /// 不依赖 isEnabled：只要磁盘有数据就纳入分析
   private func loadClipboardData(sinceMinutes minutes: Int) -> (text: String, refs: [(UUID, Date)]) {
-    guard ClipboardMonitorService.shared.isEnabled else { return ("", []) }
     let since = Date().addingTimeInterval(TimeInterval(-minutes * 60))
     let calendar = Calendar.current
     var lines: [String] = []
