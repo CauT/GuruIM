@@ -132,7 +132,7 @@ NEW\t全拼编码\t词语
       }
     }
     guard let lastRun = cfg.lastRunDate else { return true }
-    let minInterval = TimeInterval(cfg.intervalHours * 3600)
+    let minInterval = TimeInterval(cfg.intervalMinutes * 60)
     return Date().timeIntervalSince(lastRun) >= minInterval
   }
 
@@ -149,9 +149,9 @@ NEW\t全拼编码\t词语
 
   private func run() async {
     let cfg = config
-    let guruText = loadGURUText(sinceHours: cfg.intervalHours)
+    let guruText = loadGURUText(sinceMinutes: cfg.intervalMinutes)
     guard !guruText.isEmpty else {
-      logger.info("SmartFreq: no GURU data in the past \(cfg.intervalHours)h, skipping")
+      logger.info("SmartFreq: no GURU data in the past \(cfg.intervalMinutes)min, skipping")
       return
     }
 
@@ -196,8 +196,8 @@ NEW\t全拼编码\t词语
 
   // MARK: - Data Loading
 
-  private func loadGURUText(sinceHours hours: Int) -> String {
-    let since = Date().addingTimeInterval(TimeInterval(-hours * 3600))
+  private func loadGURUText(sinceMinutes minutes: Int) -> String {
+    let since = Date().addingTimeInterval(TimeInterval(-minutes * 60))
     let calendar = Calendar.current
     var lines: [String] = []
 

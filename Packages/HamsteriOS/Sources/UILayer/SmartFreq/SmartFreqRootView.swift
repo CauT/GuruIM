@@ -185,8 +185,9 @@ public struct SmartFreqSettingsView: View {
   @ObservedObject var viewModel: SmartFreqViewModel
   @Environment(\.dismiss) private var dismiss
 
+  // DEBUG: 5m 选项仅用于测试，上线前移除
   private let intervalOptions: [(String, Int)] = [
-    ("12h", 12), ("24h", 24), ("48h", 48), ("72h", 72)
+    ("5m", 5), ("12h", 12 * 60), ("24h", 24 * 60), ("48h", 48 * 60), ("72h", 72 * 60)
   ]
 
   public var body: some View {
@@ -200,7 +201,7 @@ public struct SmartFreqSettingsView: View {
         }
 
         Section("分析频次") {
-          Picker("间隔", selection: $viewModel.intervalHours) {
+          Picker("间隔", selection: $viewModel.intervalMinutes) {
             ForEach(intervalOptions, id: \.1) { label, hours in
               Text(label).tag(hours)
             }

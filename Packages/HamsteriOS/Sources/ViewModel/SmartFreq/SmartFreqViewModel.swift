@@ -21,7 +21,7 @@ public class SmartFreqViewModel: ObservableObject {
   // MARK: - Config
 
   @Published public var isEnabled: Bool = false
-  @Published public var intervalHours: Int = 24
+  @Published public var intervalMinutes: Int = 24 * 60
   @Published public var monthlyTokenBudget: Int = 0
 
   // MARK: - AI Config
@@ -43,7 +43,7 @@ public class SmartFreqViewModel: ObservableObject {
 
     let cfg = service.config
     isEnabled = cfg.isEnabled
-    intervalHours = cfg.intervalHours
+    intervalMinutes = cfg.intervalMinutes
     monthlyTokenBudget = cfg.monthlyTokenBudget
     lastRunDate = cfg.lastRunDate
   }
@@ -51,7 +51,7 @@ public class SmartFreqViewModel: ObservableObject {
   public func saveConfig() {
     var cfg = service.config
     cfg.isEnabled = isEnabled
-    cfg.intervalHours = intervalHours
+    cfg.intervalMinutes = intervalMinutes
     cfg.monthlyTokenBudget = monthlyTokenBudget
     service.config = cfg
   }

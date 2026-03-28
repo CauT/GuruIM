@@ -30,7 +30,7 @@ final class SmartFreqConfigTests: XCTestCase {
   func testDefaultValues() {
     let config = SmartFreqConfig()
     XCTAssertFalse(config.isEnabled)
-    XCTAssertEqual(config.intervalHours, 24)
+    XCTAssertEqual(config.intervalMinutes, 24 * 60)
     XCTAssertEqual(config.monthlyTokenBudget, 0)
     XCTAssertEqual(config.monthlyTokensUsed, 0)
     XCTAssertEqual(config.budgetMonth, "")
@@ -40,7 +40,7 @@ final class SmartFreqConfigTests: XCTestCase {
   func testCodableRoundtrip() throws {
     var config = SmartFreqConfig()
     config.isEnabled = true
-    config.intervalHours = 12
+    config.intervalMinutes = 12 * 60
     config.monthlyTokenBudget = 50000
     config.monthlyTokensUsed = 1200
     config.budgetMonth = "2026-03"
@@ -50,7 +50,7 @@ final class SmartFreqConfigTests: XCTestCase {
     let decoded = try JSONDecoder().decode(SmartFreqConfig.self, from: data)
 
     XCTAssertTrue(decoded.isEnabled)
-    XCTAssertEqual(decoded.intervalHours, 12)
+    XCTAssertEqual(decoded.intervalMinutes, 12 * 60)
     XCTAssertEqual(decoded.monthlyTokenBudget, 50000)
     XCTAssertEqual(decoded.monthlyTokensUsed, 1200)
     XCTAssertEqual(decoded.budgetMonth, "2026-03")
@@ -382,7 +382,7 @@ final class SmartFreqShouldRunTests: XCTestCase {
   func testShouldNotRunWhenIntervalNotMet() {
     var cfg = SmartFreqConfig()
     cfg.isEnabled = true
-    cfg.intervalHours = 24
+    cfg.intervalMinutes = 24 * 60
     cfg.lastRunDate = Date()  // 刚跑过
     service.config = cfg
     // isEnabled=true 但 API key 为空会截断，shouldRun == false
