@@ -172,16 +172,29 @@ public class AutoInsightService {
   private func run() async {
     let log = LogService.shared
     let cfg = config
-    log.log("开始分析（间隔 \(cfg.intervalMinutes) 分钟内的 GURU 数据）", tag: "AutoInsight")
+    log.log("开始分析（间隔 \(cfg.intervalMinutes) 分钟内的数据）", tag: "AutoInsight")
 
     let guruText = loadGURUText(sinceMinutes: cfg.intervalMinutes)
-    let entryCount = guruText.components(separatedBy: "\n").filter { !$0.isEmpty }.count
+    let guruCount = guruText.components(separatedBy: "\n").filter { !$0.isEmpty }.count
 
-    guard !guruText.isEmpty else {
-      log.log("无 GURU 数据，跳过本次分析", level: .warn, tag: "AutoInsight")
+    let (clipboardText, clipboardRefs) = loadClipboardData(sinceMinutes: cfg.intervalMinutes)
+    let clipCount = clipboardText.components(separatedBy: "\n").filter { !$0.isEmpty }.count
+
+    guard !guruText.isEmpty || !clipboardText.isEmpty else {
+      log.log("无 GURU 及剪贴板数据，跳过本次分析", level: .warn, tag: "AutoInsight")
       return
     }
-    log.log("GURU 数据 \(entryCount) 条，发起两路并发 AI 请求", tag: "AutoInsight")
+    log.log("GURU \(guruCount) 条 + 剪贴板 \(clipCount) 条，发起两路并发 AI 请求", tag: "AutoInsight")
+
+    // 拼合数据段
+    var dataSections: [String] = []
+    if !guruText.isEmpty {
+      dataSections.append("【输入记录】\n\(guruText)")
+    }
+    if !clipboardText.isEmpty {
+      dataSections.append("【剪贴板内容】\n\(clipboardText)")
+    }
+    let combinedData = dataSections.joined(separator: "\n\n")
 
     let backgroundSection = cfg.personalBackground.isEmpty
       ? ""
@@ -190,7 +203,7 @@ public class AutoInsightService {
     func buildPrompt(_ template: String) -> String {
       template
         .replacingOccurrences(of: "{background}", with: backgroundSection)
-        .replacingOccurrences(of: "{data}", with: guruText)
+        .replacingOccurrences(of: "{data}", with: combinedData)
     }
 
     let spiritualPromptText = buildPrompt(cfg.spiritualPrompt)
@@ -203,25 +216,32 @@ public class AutoInsightService {
     let (spiritualResult, taskResult) = await (spiritualCall, taskCall)
 
     let spiritual: String
+    let spiritualOK: Bool
     switch spiritualResult {
     case .success(let s):
       spiritual = s
+      spiritualOK = true
       log.log("心灵安慰 ✓ \(s.count) 字", tag: "AutoInsight")
     case .failure(let e):
       spiritual = "（分析失败，请检查 API Key 配置）"
+      spiritualOK = false
       log.log("心灵安慰 ✗ \(e.localizedDescription)", level: .error, tag: "AutoInsight")
     }
 
     let task: String
+    let taskOK: Bool
     switch taskResult {
     case .success(let t):
       task = t
+      taskOK = true
       log.log("事务指导 ✓ \(t.count) 字", tag: "AutoInsight")
     case .failure(let e):
       task = "（分析失败，请检查 API Key 配置）"
+      taskOK = false
       log.log("事务指导 ✗ \(e.localizedDescription)", level: .error, tag: "AutoInsight")
     }
 
+    let entryCount = guruCount + clipCount
     let insight = AutoInsightResult(
       spiritualContent: spiritual,
       taskContent: task,
@@ -233,6 +253,17 @@ public class AutoInsightService {
     allResults.insert(insight, at: 0)
     results = allResults
     log.log("结果已保存（共 \(allResults.count) 条）", tag: "AutoInsight")
+
+    // 两路均成功时清除已上送的剪贴板条目
+    if spiritualOK && taskOK && !clipboardRefs.isEmpty {
+      let clipService = ClipboardMonitorService.shared
+      for (id, date) in clipboardRefs {
+        clipService.deleteEntry(id: id, for: date)
+      }
+      log.log("剪贴板已清除 \(clipboardRefs.count) 条（分析成功）", tag: "AutoInsight")
+    } else if !clipboardRefs.isEmpty {
+      log.log("剪贴板保留（分析未完全成功）", tag: "AutoInsight")
+    }
 
     // 发送本地通知
     await scheduleNotification()
@@ -260,6 +291,29 @@ public class AutoInsightService {
     }
 
     return lines.joined(separator: "\n")
+  }
+
+  /// 加载剪贴板数据，返回 (文本, [(id, date)]) 用于成功后清除
+  private func loadClipboardData(sinceMinutes minutes: Int) -> (text: String, refs: [(UUID, Date)]) {
+    guard ClipboardMonitorService.shared.isEnabled else { return ("", []) }
+    let since = Date().addingTimeInterval(TimeInterval(-minutes * 60))
+    let calendar = Calendar.current
+    var lines: [String] = []
+    var refs: [(UUID, Date)] = []
+
+    var cursor = since
+    while cursor <= Date() {
+      let dayStart = calendar.startOfDay(for: cursor)
+      let entries = ClipboardMonitorService.shared.entries(for: cursor)
+        .filter { $0.timestamp >= since && $0.isMeaningful && $0.contentType != .image }
+      for e in entries {
+        lines.append("[\(e.formattedTime)][\(e.contentType.rawValue)] \(String(e.content.prefix(300)))")
+        refs.append((e.id, dayStart))
+      }
+      guard let next = calendar.date(byAdding: .day, value: 1, to: cursor) else { break }
+      cursor = next
+    }
+    return (lines.joined(separator: "\n"), refs)
   }
 
   // MARK: - AI Call
