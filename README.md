@@ -9,7 +9,7 @@
 <p>
   <img src="https://img.shields.io/badge/平台-iOS%2015%2B-blue" alt="iOS 15+"/>
   <img src="https://img.shields.io/badge/版本-3.0.0-green" alt="Version 3.0.0"/>
-  <img src="https://img.shields.io/badge/许可证-MIT-orange" alt="MIT License"/>
+  <img src="https://img.shields.io/badge/许可证-MIT%20%2B%20Commons%20Clause-orange" alt="MIT + Commons Clause"/>
   <img src="https://img.shields.io/badge/引擎-RIME-purple" alt="RIME"/>
 </p>
 
@@ -30,7 +30,19 @@
 
 ## 功能特性
 
-### ⌨️ RIME 输入法
+### 🧠 Now Guru 智能助手
+
+| 功能 | 说明 |
+|------|------|
+| **输入采集（GURU）** | 记录键盘上屏词汇，构建个人数据档案 |
+| **剪贴板监听** | 自动采集剪贴板新增内容（文字、Emoji），含时间戳与类型标注 |
+| **AI 对话** | 支持 OpenAI / OpenRouter / Claude / Kimi / MiniMax / GLM，自定义 Prompt |
+| **每日洞察** | 定时 AI 分析输入及剪贴板记录，生成心灵安慰与事务指导，本地通知推送，分析成功后自动清理剪贴板 |
+| **智能调频** | AI 静默分析输入习惯，自动优化候选词排序、添加新词，支持 Token 预算控制 |
+| **Google Drive 同步** | OAuth 授权登录，GURU 数据一键云端备份 |
+| **隐私保护** | 按应用场景过滤输入类型、敏感词过滤、一键暂停采集 |
+
+### ⌨️ 原有 RIME 输入法
 
 - 支持多种输入方案（内置雾凇拼音）
 - 26 键标准键盘 / 中文九宫格 / 数字九宫格
@@ -44,18 +56,6 @@
 - 文件管理器
 - iCloud 同步
 - 软件备份与恢复
-
-### 🧠 Now Guru 智能助手
-
-| 功能 | 说明 |
-|------|------|
-| **输入采集（GURU）** | 记录键盘上屏词汇，构建个人数据档案 |
-| **剪贴板监听** | 自动采集剪贴板新增内容（文字、Emoji），含时间戳与类型标注 |
-| **AI 对话** | 支持 OpenAI / OpenRouter / Claude / Kimi / MiniMax / GLM，自定义 Prompt |
-| **每日洞察** | 定时 AI 分析输入及剪贴板记录，生成心灵安慰与事务指导，本地通知推送，分析成功后自动清理剪贴板 |
-| **智能调频** | AI 静默分析输入习惯，自动优化候选词排序、添加新词，支持 Token 预算控制 |
-| **Google Drive 同步** | OAuth 授权登录，GURU 数据一键云端备份 |
-| **隐私保护** | 按应用场景过滤输入类型、敏感词过滤、一键暂停采集 |
 
 ---
 
@@ -161,9 +161,11 @@ Hamster/
 
 ## 许可证
 
-本项目采用 [MIT License](LICENSE.txt)。
+本项目采用 [MIT + Commons Clause](LICENSE.txt)。
 
-> 本项目最初采用 GPL-3.0 许可，从 v2.1.0 起变更为 MIT 许可。
+你可以自由使用、修改和分发本软件，但**不得将其作为付费产品或服务出售**。
+
+> 本项目最初采用 GPL-3.0 许可，v2.1.0 变更为 MIT，现变更为 MIT + Commons Clause。
 
 ---
 
@@ -171,9 +173,6 @@ Hamster/
 
 - [imfuxiao/Hamster](https://github.com/imfuxiao/Hamster) — 本项目 fork 自此仓库，感谢原作者的出色工作
 - [RIME 中州韻](https://rime.im/) 及其生态社区
-- TF 版本交流群中 @一梦浮生、@CZ36P9z9 等伙伴的测试反馈
-- @王牌饼干 为输入法制作的工具
-- @amorphobia 为 LibrimeKit 提交的 GitHub Action 配置
 
 ---
 
