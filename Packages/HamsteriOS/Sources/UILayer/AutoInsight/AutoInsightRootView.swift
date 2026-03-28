@@ -210,6 +210,7 @@ public struct AutoInsightDetailView: View {
   @Environment(\.dismiss) private var dismiss
 
   @State private var shareItems: [Any]?
+  @State private var showShareSheet = false
   @State private var showDeleteAlert = false
 
   public var body: some View {
@@ -237,12 +238,15 @@ public struct AutoInsightDetailView: View {
           HStack(spacing: 12) {
             ShareButton(title: "分享心灵安慰", icon: "heart", color: .pink) {
               shareItems = [result.spiritualContent]
+              showShareSheet = true
             }
             ShareButton(title: "分享事务指导", icon: "checklist", color: .blue) {
               shareItems = [result.taskContent]
+              showShareSheet = true
             }
             ShareButton(title: "全部分享", icon: "square.and.arrow.up", color: .purple) {
               shareItems = [viewModel.shareText(for: result)]
+              showShareSheet = true
             }
           }
           .padding(.horizontal, 4)
@@ -265,11 +269,10 @@ public struct AutoInsightDetailView: View {
       }
     }
     .navigationViewStyle(.stack)
-    .sheet(item: Binding(
-      get: { shareItems.map(ShareItemsWrapper.init) },
-      set: { if $0 == nil { shareItems = nil } }
-    )) { wrapper in
-      ShareSheet(items: wrapper.items)
+    .sheet(isPresented: $showShareSheet, onDismiss: { shareItems = nil }) {
+      if let items = shareItems {
+        ShareSheet(items: items)
+      }
     }
     .alert("确认删除", isPresented: $showDeleteAlert) {
       Button("删除", role: .destructive) {
@@ -560,11 +563,6 @@ private struct InsightSecureKeyField: View {
     }
     .onAppear { text = key }
   }
-}
-
-private struct ShareItemsWrapper: Identifiable {
-  let id = UUID()
-  let items: [Any]
 }
 
 private struct ShareSheet: UIViewControllerRepresentable {
