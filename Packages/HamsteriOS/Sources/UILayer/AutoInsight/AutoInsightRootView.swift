@@ -38,7 +38,11 @@ public struct AutoInsightRootView: View {
     NavigationView {
       Group {
         if viewModel.results.isEmpty {
-          emptyState
+          if viewModel.isEnabled {
+            enabledEmptyState
+          } else {
+            emptyState
+          }
         } else {
           resultList
         }
@@ -65,7 +69,7 @@ public struct AutoInsightRootView: View {
     .onAppear { viewModel.reload() }
   }
 
-  // MARK: Empty state
+  // MARK: Empty state — 未开启
 
   private var emptyState: some View {
     VStack(spacing: 20) {
@@ -91,6 +95,37 @@ public struct AutoInsightRootView: View {
           .padding(.vertical, 12)
       }
       .buttonStyle(.borderedProminent)
+      .tint(.purple)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+  }
+
+  // MARK: Empty state — 已开启，尚无结果
+
+  private var enabledEmptyState: some View {
+    VStack(spacing: 20) {
+      Image(systemName: "checkmark.circle.fill")
+        .font(.system(size: 56))
+        .foregroundColor(.green)
+
+      Text("已开启")
+        .font(.title2.bold())
+
+      Text("将在下次键盘弹出时自动分析输入记录，\n结果会通过通知提醒你查看。")
+        .font(.subheadline)
+        .foregroundColor(.secondary)
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 32)
+
+      Button {
+        showSettings = true
+      } label: {
+        Label("查看设置", systemImage: "gearshape")
+          .font(.subheadline)
+          .padding(.horizontal, 20)
+          .padding(.vertical, 10)
+      }
+      .buttonStyle(.bordered)
       .tint(.purple)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -302,6 +337,7 @@ public struct AutoInsightDetailView: View {
 public struct AutoInsightSettingsView: View {
   @ObservedObject var viewModel: AutoInsightViewModel
   @Environment(\.dismiss) private var dismiss
+  @State private var savedFeedback = false
 
   // DEBUG: 5m 选项仅用于测试，上线前移除
   private let intervalOptions: [(String, Int)] = [
@@ -422,11 +458,23 @@ public struct AutoInsightSettingsView: View {
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
-          Button("完成") {
+          Button {
             viewModel.saveConfig()
-            dismiss()
+            savedFeedback = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+              dismiss()
+            }
+          } label: {
+            if savedFeedback {
+              Label("已保存", systemImage: "checkmark")
+                .foregroundColor(.green)
+                .font(.body.bold())
+            } else {
+              Text("完成")
+                .font(.body.bold())
+            }
           }
-          .font(.body.bold())
+          .disabled(savedFeedback)
         }
       }
     }
