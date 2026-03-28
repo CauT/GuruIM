@@ -182,33 +182,50 @@ public class AIService {
     apiKey: String,
     completion: @escaping (Result<(String, AIUsage?), Error>) -> Void
   ) {
-    let url = URL(string: "\(provider.baseURL)/chat/completions")!
+    let urlString = "\(provider.baseURL)/chat/completions"
+    let url = URL(string: urlString)!
     var req = URLRequest(url: url)
     req.httpMethod = "POST"
     req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
     req.setValue("application/json", forHTTPHeaderField: "Content-Type")
     if provider == .openrouter {
-      req.setValue("Hamster iOS", forHTTPHeaderField: "X-Title")
+      req.setValue("Guru iOS", forHTTPHeaderField: "X-Title")
     }
+    let model = selectedModel
     let body: [String: Any] = [
-      "model": selectedModel,
+      "model": model,
       "messages": messages.map { ["role": $0.role, "content": $0.content] },
       "max_tokens": 4096,
     ]
     req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+    let log = LogService.shared
+    log.log("→ \(provider.rawValue) \(model) \(urlString) msgs=\(messages.count)", tag: "AI")
+
     URLSession.shared.dataTask(with: req) { data, response, error in
-      if let error = error { DispatchQueue.main.async { completion(.failure(error)) }; return }
-      guard let data else { DispatchQueue.main.async { completion(.failure(AIError.emptyResponse)) }; return }
+      let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+      if let error = error {
+        log.log("✗ network error: \(error.localizedDescription)", level: .error, tag: "AI")
+        DispatchQueue.main.async { completion(.failure(error)) }; return
+      }
+      guard let data else {
+        log.log("✗ empty response (HTTP \(status))", level: .error, tag: "AI")
+        DispatchQueue.main.async { completion(.failure(AIError.emptyResponse)) }; return
+      }
+      let rawBody = String(data: data, encoding: .utf8) ?? "<binary>"
       guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+        log.log("✗ parse error (HTTP \(status)) body=\(rawBody.prefix(400))", level: .error, tag: "AI")
         DispatchQueue.main.async { completion(.failure(AIError.parseError)) }; return
       }
       if let errObj = json["error"] as? [String: Any], let msg = errObj["message"] as? String {
+        log.log("✗ API error (HTTP \(status)): \(msg) | raw=\(rawBody.prefix(400))", level: .error, tag: "AI")
         DispatchQueue.main.async { completion(.failure(AIError.apiError(msg))) }; return
       }
       guard let choices = json["choices"] as? [[String: Any]],
             let message = choices.first?["message"] as? [String: Any],
             let content = message["content"] as? String
       else {
+        log.log("✗ unexpected JSON (HTTP \(status)) body=\(rawBody.prefix(400))", level: .error, tag: "AI")
         DispatchQueue.main.async { completion(.failure(AIError.parseError)) }; return
       }
       var usage: AIUsage?
@@ -216,6 +233,9 @@ public class AIService {
         let input = usageObj["prompt_tokens"] as? Int ?? 0
         let output = usageObj["completion_tokens"] as? Int ?? 0
         usage = AIUsage(inputTokens: input, outputTokens: output)
+        log.log("✓ OK HTTP \(status) in=\(input) out=\(output)", tag: "AI")
+      } else {
+        log.log("✓ OK HTTP \(status) (no usage info)", tag: "AI")
       }
       DispatchQueue.main.async { completion(.success((content, usage))) }
     }.resume()
@@ -228,7 +248,8 @@ public class AIService {
     apiKey: String,
     completion: @escaping (Result<(String, AIUsage?), Error>) -> Void
   ) {
-    let url = URL(string: "https://api.anthropic.com/v1/messages")!
+    let urlString = "https://api.anthropic.com/v1/messages"
+    let url = URL(string: urlString)!
     var req = URLRequest(url: url)
     req.httpMethod = "POST"
     req.setValue(apiKey, forHTTPHeaderField: "x-api-key")
@@ -237,27 +258,42 @@ public class AIService {
 
     let systemMsg = messages.first(where: { $0.role == "system" })?.content
     let chatMsgs = messages.filter { $0.role != "system" }
+    let model = selectedModel
 
     var body: [String: Any] = [
-      "model": selectedModel,
+      "model": model,
       "max_tokens": 4096,
       "messages": chatMsgs.map { ["role": $0.role, "content": $0.content] },
     ]
     if let sys = systemMsg, !sys.isEmpty { body["system"] = sys }
     req.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-    URLSession.shared.dataTask(with: req) { data, _, error in
-      if let error = error { DispatchQueue.main.async { completion(.failure(error)) }; return }
-      guard let data else { DispatchQueue.main.async { completion(.failure(AIError.emptyResponse)) }; return }
+    let log = LogService.shared
+    log.log("→ Claude \(model) \(urlString) msgs=\(messages.count)", tag: "AI")
+
+    URLSession.shared.dataTask(with: req) { data, response, error in
+      let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+      if let error = error {
+        log.log("✗ network error: \(error.localizedDescription)", level: .error, tag: "AI")
+        DispatchQueue.main.async { completion(.failure(error)) }; return
+      }
+      guard let data else {
+        log.log("✗ empty response (HTTP \(status))", level: .error, tag: "AI")
+        DispatchQueue.main.async { completion(.failure(AIError.emptyResponse)) }; return
+      }
+      let rawBody = String(data: data, encoding: .utf8) ?? "<binary>"
       guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+        log.log("✗ parse error (HTTP \(status)) body=\(rawBody.prefix(400))", level: .error, tag: "AI")
         DispatchQueue.main.async { completion(.failure(AIError.parseError)) }; return
       }
       if let errObj = json["error"] as? [String: Any], let msg = errObj["message"] as? String {
+        log.log("✗ API error (HTTP \(status)): \(msg) | raw=\(rawBody.prefix(400))", level: .error, tag: "AI")
         DispatchQueue.main.async { completion(.failure(AIError.apiError(msg))) }; return
       }
       guard let content = json["content"] as? [[String: Any]],
             let text = content.first(where: { $0["type"] as? String == "text" })?["text"] as? String
       else {
+        log.log("✗ unexpected JSON (HTTP \(status)) body=\(rawBody.prefix(400))", level: .error, tag: "AI")
         DispatchQueue.main.async { completion(.failure(AIError.parseError)) }; return
       }
       var usage: AIUsage?
@@ -265,6 +301,9 @@ public class AIService {
         let input = usageObj["input_tokens"] as? Int ?? 0
         let output = usageObj["output_tokens"] as? Int ?? 0
         usage = AIUsage(inputTokens: input, outputTokens: output)
+        log.log("✓ OK HTTP \(status) in=\(input) out=\(output)", tag: "AI")
+      } else {
+        log.log("✓ OK HTTP \(status) (no usage info)", tag: "AI")
       }
       DispatchQueue.main.async { completion(.success((text, usage))) }
     }.resume()

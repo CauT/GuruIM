@@ -362,6 +362,10 @@ extension HamsterAppDependencyContainer: SubViewControllerFactory {
     return GoogleDriveViewController()
   }
 
+  func makeLogViewController() -> LogViewController {
+    return LogViewController()
+  }
+
   func makeInputMethodSettingsViewController() -> InputMethodSettingsViewController {
     return InputMethodSettingsViewController(
       mainViewModel: mainViewModel,

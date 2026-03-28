@@ -50,6 +50,7 @@ public class SettingsViewModel: ObservableObject {
   func navigateToSmartFreq() { mainViewModel.subViewSubject.send(.smartFreq) }
   func navigateToInputMethodSettings() { mainViewModel.subViewSubject.send(.inputMethodSettings) }
   func navigateToGoogleDrive() { mainViewModel.subViewSubject.send(.googleDrive) }
+  func navigateToDebugLog() { mainViewModel.subViewSubject.send(.debugLog) }
 
   var tableReloadSubject = PassthroughSubject<Bool, Never>()
   var tableReloadPublished: AnyPublisher<Bool, Never> {
@@ -208,6 +209,16 @@ public class SettingsViewModel: ObservableObject {
           accessoryType: .disclosureIndicator,
           navigationAction: { [unowned self] in
             self.mainViewModel.subViewSubject.send(.googleDrive)
+          }
+        ),
+      ]),
+      .init(title: "调试", items: [
+        .init(
+          icon: UIImage(systemName: "ladybug")!.withTintColor(.systemGray),
+          text: "调试日志",
+          accessoryType: .disclosureIndicator,
+          navigationAction: { [unowned self] in
+            self.mainViewModel.subViewSubject.send(.debugLog)
           }
         ),
       ]),

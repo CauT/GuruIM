@@ -58,6 +58,9 @@ public enum SettingsSubView: String {
   /// Google Drive 同步页面
   case googleDrive
 
+  /// 调试日志页面
+  case debugLog
+
   /// 空页面
   case none
 }
