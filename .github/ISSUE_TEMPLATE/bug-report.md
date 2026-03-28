@@ -1,9 +1,9 @@
 ---
 name: bug report
-about: 创建一个 Bug 的反馈，帮助我来改进「仓输入法」
+about: 创建一个 Bug 的反馈，帮助我来改进「咕噜输入法」
 title: "「Bug」请填 Bug 的标题"
 labels: ''
-assignees: imfuxiao
+assignees: CauT
 
 ---
 
@@ -24,7 +24,7 @@ assignees: imfuxiao
 
 **设备信息（请填写以下信息）：**
  -  iOS 版本：如 17.0.3
- -  仓输入法版本：商店版 2.4.1 或 TF 3.0.0（122）
+ -  咕噜输入法版本：3.0.0
 
 **其他**
 

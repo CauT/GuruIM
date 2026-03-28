@@ -310,7 +310,7 @@ extension InputSchemaViewModel {
 
 public extension InputSchemaViewModel {
   // static let copyright = "云端存储内容均为仓输入法用户自主上传，内容立场与仓输入法无关，版权归原作者所有，如有侵权，请联系我(morse.hsiao@gmail.com)删除。"
-  static let copyright = "开源输入方案均来自：https://github.com/imfuxiao/HamsterInputSchemas 项目，希望将输入方案内置到咕噜输入法的作者，可以提交 PR，或者联系我（morse.hsiao@gmail.com）。"
+  static let copyright = "开源输入方案均来自：https://github.com/imfuxiao/HamsterInputSchemas 项目，希望将输入方案内置到咕噜输入法的作者，可以提交 PR，或者联系我（donglingyongadls@gmail.com）。"
   // 单位： byte
   static let maxFileSize = 50 * 1024 * 1024
 }

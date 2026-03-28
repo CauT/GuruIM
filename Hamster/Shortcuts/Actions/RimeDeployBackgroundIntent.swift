@@ -23,7 +23,7 @@ struct RimeDeployBackgroundIntent: AppIntent {
     .alwaysAllowed
   }
 
-  static var description = IntentDescription("仓输入法 - RIME 重新部署，后台静默运行，不会打开应用，但可能会有超时的异常。")
+  static var description = IntentDescription("咕噜输入法 - RIME 重新部署，后台静默运行，不会打开应用，但可能会有超时的异常。")
 
   @MainActor
   func perform() async throws -> some ReturnsValue<Bool> {
