@@ -5,6 +5,8 @@
 > **GuruIM 采集你的全部输入记录——键盘上屏、剪贴板、上下文——在你的完全控制下导出给任意 LLM 大模型。我愿以身饲 AI。**
 
 <p align="center">
+  <img src="docs/images/en/hero-banner.png" width="280" alt="I'm willing to feed myself to AI, but I'm the one holding the bowl."/>
+  &nbsp;&nbsp;
   <img src="docs/images/hero-banner.png" width="280" alt="我愿以身饲 AI，但碗必须端在自己手里"/>
 </p>
 
@@ -42,9 +44,9 @@ An iOS keyboard built on the [RIME input method engine](https://github.com/rime/
 ### Workflow
 
 <p align="center">
-  <img src="docs/images/why-ai-needs-you.png" width="280" alt="Why AI never understands you"/>
+  <img src="docs/images/en/why-ai-needs-you.png" width="280" alt="Why AI never really gets you"/>
   &nbsp;&nbsp;
-  <img src="docs/images/two-modes.png" width="280" alt="Two modes"/>
+  <img src="docs/images/en/two-modes.png" width="280" alt="Two ways to use it"/>
 </p>
 
 GuruIM offers two usage modes. Choose either or combine them as you see fit.
@@ -132,7 +134,7 @@ GuruIM offers two usage modes. Choose either or combine them as you see fit.
 #### 🧠 Now Guru — AI Assistant
 
 <p align="center">
-  <img src="docs/images/what-is-guruim.png" width="280" alt="What is GuruIM"/>
+  <img src="docs/images/en/what-is-guruim.png" width="280" alt="What is GuruIM?"/>
 </p>
 
 | Feature | Description |
@@ -148,7 +150,7 @@ GuruIM offers two usage modes. Choose either or combine them as you see fit.
 #### ⌨️ RIME Keyboard
 
 <p align="center">
-  <img src="docs/images/keyboard-features.png" width="320" alt="Keyboard features"/>
+  <img src="docs/images/en/keyboard-features.png" width="280" alt="First, it's a real keyboard"/>
   &nbsp;&nbsp;
   <img src="docs/images/screenshot-keyboard.png" width="180" alt="Keyboard screenshot"/>
 </p>
@@ -282,6 +284,18 @@ You are free to use, modify, and distribute this software, but **you may not sel
 
 - [imfuxiao/Hamster](https://github.com/imfuxiao/Hamster) — This project is forked from this repository. Thanks to the original author for the excellent work.
 - [RIME](https://rime.im/) and its open-source community
+
+---
+
+### Privacy
+
+<p align="center">
+  <img src="docs/images/en/privacy.png" width="280" alt="Let's be clear about privacy"/>
+</p>
+
+1. **Fully local** — All data stays on your device. Nothing leaves without your permission.
+2. **You control everything** — Granular settings and transparent options put you in charge.
+3. **Open source** — The code is public and verifiable. Trust through transparency.
 
 ---
 
