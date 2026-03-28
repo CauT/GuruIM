@@ -677,7 +677,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Hamster/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = 咕噜输入法;
+				INFOPLIST_KEY_CFBundleDisplayName = "咕噜输入法";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -788,7 +788,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Hamster/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = 咕噜输入法;
+				INFOPLIST_KEY_CFBundleDisplayName = "咕噜输入法";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
