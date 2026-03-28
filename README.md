@@ -164,6 +164,7 @@ Hamster/
 
 ## 致谢
 
+- [imfuxiao/Hamster](https://github.com/imfuxiao/Hamster) — 本项目 fork 自此仓库，感谢原作者的出色工作
 - [RIME 中州韻](https://rime.im/) 及其生态社区
 - TF 版本交流群中 @一梦浮生、@CZ36P9z9 等伙伴的测试反馈
 - @王牌饼干 为输入法制作的工具
