@@ -55,6 +55,9 @@ public enum SettingsSubView: String {
   /// 输入法设置汇总页面
   case inputMethodSettings
 
+  /// Google Drive 同步页面
+  case googleDrive
+
   /// 空页面
   case none
 }

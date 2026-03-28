@@ -1,4 +1,3 @@
-import AuthenticationServices
 import Combine
 import Foundation
 import HamsterKit
@@ -23,13 +22,6 @@ class GURUViewModel: ObservableObject {
   @Published var clipboardEntryCount: Int = 0
   @Published var clipboardPreviewEntries: [ClipboardEntry] = []
 
-  // MARK: - Google Drive State
-
-  @Published var googleDriveEmail: String? = GoogleDriveService.shared.signedInEmail
-  @Published var isGoogleSyncing: Bool = false
-  @Published var googleSyncProgress: Double = 0
-  @Published var googleStatusMessage: String = ""
-  @Published var googleClientID: String = GoogleDriveService.shared.clientID
 
   // MARK: - AI State
 
@@ -42,7 +34,6 @@ class GURUViewModel: ObservableObject {
 
   private let service = GURUDataService.shared
   private let clipboardService = ClipboardMonitorService.shared
-  private let googleService = GoogleDriveService.shared
   private let aiService = AIService.shared
 
   // MARK: - Init
@@ -104,61 +95,6 @@ class GURUViewModel: ObservableObject {
           switch result {
           case .success(let count): self?.statusMessage = "已上传 \(count) 个文件到 iCloud ✓"; completion(true)
           case .failure(let error): self?.statusMessage = "上传失败：\(error.localizedDescription)"; completion(false)
-          }
-        }
-      }
-    )
-  }
-
-  // MARK: - Google Drive
-
-  func saveGoogleClientID(_ id: String) {
-    googleService.clientID = id
-    googleClientID = id
-  }
-
-  func googleSignIn(anchor: ASPresentationAnchor) {
-    guard googleService.isConfigured else {
-      googleStatusMessage = "请先填入 Google OAuth Client ID"
-      return
-    }
-    googleStatusMessage = "正在打开 Google 登录..."
-    googleService.signIn(anchor: anchor) { [weak self] result in
-      DispatchQueue.main.async {
-        switch result {
-        case .success:
-          self?.googleDriveEmail = GoogleDriveService.shared.signedInEmail
-          self?.googleStatusMessage = "已登录 Google Drive ✓"
-        case .failure(let error):
-          self?.googleStatusMessage = "登录失败：\(error.localizedDescription)"
-        }
-      }
-    }
-  }
-
-  func googleSignOut() {
-    googleService.signOut()
-    googleDriveEmail = nil
-    googleStatusMessage = ""
-  }
-
-  func syncToGoogleDrive() {
-    guard !selectedDates.isEmpty else { googleStatusMessage = "请先选择要同步的日期"; return }
-    guard let guruBase = service.guruBaseURL else { googleStatusMessage = "无法获取本地数据路径"; return }
-    isGoogleSyncing = true
-    googleSyncProgress = 0
-    googleStatusMessage = "正在同步到 Google Drive..."
-
-    googleService.syncGURU(
-      dates: Array(selectedDates),
-      guruBaseURL: guruBase,
-      progress: { [weak self] p in DispatchQueue.main.async { self?.googleSyncProgress = p } },
-      completion: { [weak self] result in
-        DispatchQueue.main.async {
-          self?.isGoogleSyncing = false
-          switch result {
-          case .success(let count): self?.googleStatusMessage = "已同步 \(count) 个文件到 Google Drive ✓"
-          case .failure(let error): self?.googleStatusMessage = "同步失败：\(error.localizedDescription)"
           }
         }
       }

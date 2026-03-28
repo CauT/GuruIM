@@ -24,6 +24,7 @@ protocol SubViewControllerFactory {
   func makeGURUViewController() -> GURUViewController
   func makeAutoInsightViewController() -> AutoInsightViewController
   func makeSmartFreqViewController() -> SmartFreqViewController
+  func makeGoogleDriveViewController() -> GoogleDriveViewController
   func makeInputMethodSettingsViewController() -> InputMethodSettingsViewController
 }
 
@@ -67,6 +68,9 @@ open class MainViewController: UISplitViewController {
 
   private lazy var smartFreqViewController: SmartFreqViewController
     = subViewControllerFactory.makeSmartFreqViewController()
+
+  private lazy var googleDriveViewController: GoogleDriveViewController
+    = subViewControllerFactory.makeGoogleDriveViewController()
 
   private lazy var inputMethodSettingsViewController: InputMethodSettingsViewController
     = subViewControllerFactory.makeInputMethodSettingsViewController()
@@ -179,6 +183,8 @@ extension MainViewController {
       presentAutoInsightViewController()
     case .smartFreq:
       presentSmartFreqViewController()
+    case .googleDrive:
+      presentGoogleDriveViewController()
     case .inputMethodSettings:
       presentInputMethodSettingsViewController()
     case .about:
@@ -240,6 +246,10 @@ extension MainViewController {
 
   func presentSmartFreqViewController() {
     presentViewController(smartFreqViewController)
+  }
+
+  func presentGoogleDriveViewController() {
+    presentViewController(googleDriveViewController)
   }
 
   func presentInputMethodSettingsViewController() {

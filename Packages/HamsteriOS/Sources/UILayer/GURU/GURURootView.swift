@@ -13,7 +13,6 @@ struct GURURootView: View {
   @State private var editingPrompt: AIPrompt?
   @State private var selectedPrompt: AIPrompt?
   @State private var includeGURU = true
-  @State private var clientIDInput: String = GoogleDriveService.shared.clientID
   @State private var includeClipboard = true
   @State private var showClearClipboardAlert = false
 
@@ -62,9 +61,6 @@ struct GURURootView: View {
           Text("iCloud 操作")
         }
       }
-
-      // Google Drive 同步
-      googleDriveSection
 
       // 敏感词过滤
       sensitiveFilterSection
@@ -209,78 +205,6 @@ struct GURURootView: View {
       }
     }
     .disabled(viewModel.selectedDates.isEmpty)
-  }
-
-  // MARK: - Google Drive Section
-
-  var googleDriveSection: some View {
-    Section {
-      if let email = viewModel.googleDriveEmail {
-        HStack {
-          Image(systemName: "person.circle.fill").foregroundColor(.green)
-          VStack(alignment: .leading, spacing: 2) {
-            Text("已登录").font(.caption2).foregroundColor(.secondary)
-            Text(email).font(.subheadline)
-          }
-          Spacer()
-          Button("退出") { viewModel.googleSignOut() }
-            .font(.subheadline).foregroundColor(.red)
-        }
-        Button {
-          viewModel.syncToGoogleDrive()
-        } label: {
-          HStack {
-            if viewModel.isGoogleSyncing {
-              ProgressView(value: viewModel.googleSyncProgress).frame(width: 80)
-              Text("同步中 \(Int(viewModel.googleSyncProgress * 100))%")
-            } else {
-              Image(systemName: "arrow.triangle.2.circlepath.icloud")
-              Text("同步到 Google Drive（\(viewModel.selectedDates.count) 天）")
-            }
-          }
-        }
-        .disabled(viewModel.isGoogleSyncing || viewModel.selectedDates.isEmpty)
-      } else {
-        // Client ID 配置行
-        HStack {
-          TextField("OAuth Client ID", text: $clientIDInput)
-            .autocorrectionDisabled()
-            .autocapitalization(.none)
-            .font(.system(.footnote, design: .monospaced))
-          if !clientIDInput.isEmpty && clientIDInput != viewModel.googleClientID {
-            Button("保存") {
-              viewModel.saveGoogleClientID(clientIDInput)
-            }
-            .font(.subheadline)
-          }
-        }
-        // 登录按钮（配置后才启用）
-        Button {
-          guard let window = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene }).flatMap({ $0.windows })
-            .first(where: { $0.isKeyWindow }) else { return }
-          viewModel.googleSignIn(anchor: window)
-        } label: {
-          Label("登录 Google 账号", systemImage: "person.badge.plus")
-        }
-        .disabled(viewModel.googleClientID.isEmpty)
-      }
-      if !viewModel.googleStatusMessage.isEmpty {
-        Text(viewModel.googleStatusMessage)
-          .font(.caption)
-          .foregroundColor(viewModel.googleStatusMessage.contains("✓") ? .green : .secondary)
-      }
-    } header: {
-      Text("Google Drive 同步")
-    } footer: {
-      VStack(alignment: .leading, spacing: 4) {
-        Text("同步 GURU 输入记录至 Google Drive / Hamster / GURU / 目录。")
-        if viewModel.googleDriveEmail == nil {
-          Text("首次使用：前往 Google Cloud Console → APIs & Services → Credentials，创建 **Web 应用** 类型的 OAuth 2.0 Client ID，在「已获授权的重定向 URI」中添加：\nhamster://oauth2redirect")
-        }
-      }
-      .font(.caption)
-    }
   }
 
   // MARK: - Sensitive Filter Section
