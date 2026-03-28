@@ -124,24 +124,64 @@ public class AutoInsightService {
 
   /// 满足条件时执行分析（异步，不阻塞键盘）
   public func runIfNeeded() async {
-    guard shouldRun else { return }
+    let log = LogService.shared
+    let cfg = config
+    guard cfg.isEnabled else {
+      log.log("跳过：未启用每日洞察", tag: "AutoInsight")
+      return
+    }
+    let provider = AIService.shared.selectedProvider
+    guard !AIService.shared.apiKey(for: provider).isEmpty else {
+      log.log("跳过：\(provider.rawValue) API Key 未配置", level: .warn, tag: "AutoInsight")
+      return
+    }
+    if let lastRun = cfg.lastRunDate {
+      let elapsed = Date().timeIntervalSince(lastRun)
+      let minInterval = TimeInterval(cfg.intervalMinutes * 60)
+      guard elapsed >= minInterval else {
+        let remaining = Int((minInterval - elapsed) / 60)
+        log.log("跳过：距上次运行仅 \(Int(elapsed / 60)) 分钟，还需等待 \(remaining) 分钟", tag: "AutoInsight")
+        return
+      }
+    }
     // 立即更新 lastRunDate，防止并发重入
+    var updatedCfg = cfg
+    updatedCfg.lastRunDate = Date()
+    config = updatedCfg
+
+    await run()
+  }
+
+  /// 手动立即触发分析（忽略时间间隔限制）
+  public func runNow() async {
+    let log = LogService.shared
+    let provider = AIService.shared.selectedProvider
+    guard !AIService.shared.apiKey(for: provider).isEmpty else {
+      log.log("手动触发失败：\(provider.rawValue) API Key 未配置", level: .error, tag: "AutoInsight")
+      return
+    }
     var cfg = config
     cfg.lastRunDate = Date()
     config = cfg
-
+    log.log("手动触发分析", tag: "AutoInsight")
     await run()
   }
 
   // MARK: - Core Analysis
 
   private func run() async {
+    let log = LogService.shared
     let cfg = config
+    log.log("开始分析（间隔 \(cfg.intervalMinutes) 分钟内的 GURU 数据）", tag: "AutoInsight")
+
     let guruText = loadGURUText(sinceMinutes: cfg.intervalMinutes)
+    let entryCount = guruText.components(separatedBy: "\n").filter { !$0.isEmpty }.count
+
     guard !guruText.isEmpty else {
-      logger.info("AutoInsight: no GURU data in the past \(cfg.intervalMinutes)min, skipping")
+      log.log("无 GURU 数据，跳过本次分析", level: .warn, tag: "AutoInsight")
       return
     }
+    log.log("GURU 数据 \(entryCount) 条，发起两路并发 AI 请求", tag: "AutoInsight")
 
     let backgroundSection = cfg.personalBackground.isEmpty
       ? ""
@@ -162,10 +202,25 @@ public class AutoInsightService {
 
     let (spiritualResult, taskResult) = await (spiritualCall, taskCall)
 
-    let spiritual = (try? spiritualResult.get()) ?? "（分析失败，请检查 API Key 配置）"
-    let task = (try? taskResult.get()) ?? "（分析失败，请检查 API Key 配置）"
+    let spiritual: String
+    switch spiritualResult {
+    case .success(let s):
+      spiritual = s
+      log.log("心灵安慰 ✓ \(s.count) 字", tag: "AutoInsight")
+    case .failure(let e):
+      spiritual = "（分析失败，请检查 API Key 配置）"
+      log.log("心灵安慰 ✗ \(e.localizedDescription)", level: .error, tag: "AutoInsight")
+    }
 
-    let entryCount = guruText.components(separatedBy: "\n").filter { !$0.isEmpty }.count
+    let task: String
+    switch taskResult {
+    case .success(let t):
+      task = t
+      log.log("事务指导 ✓ \(t.count) 字", tag: "AutoInsight")
+    case .failure(let e):
+      task = "（分析失败，请检查 API Key 配置）"
+      log.log("事务指导 ✗ \(e.localizedDescription)", level: .error, tag: "AutoInsight")
+    }
 
     let insight = AutoInsightResult(
       spiritualContent: spiritual,
@@ -177,10 +232,10 @@ public class AutoInsightService {
     var allResults = results
     allResults.insert(insight, at: 0)
     results = allResults
+    log.log("结果已保存（共 \(allResults.count) 条）", tag: "AutoInsight")
 
     // 发送本地通知
     await scheduleNotification()
-    logger.info("AutoInsight: analysis completed, \(entryCount) entries")
   }
 
   // MARK: - Data Loading

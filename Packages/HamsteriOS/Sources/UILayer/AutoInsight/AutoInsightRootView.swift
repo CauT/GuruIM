@@ -50,7 +50,20 @@ public struct AutoInsightRootView: View {
       .navigationTitle("每日洞察")
       .navigationBarTitleDisplayMode(.large)
       .toolbar {
-        ToolbarItem(placement: .navigationBarTrailing) {
+        ToolbarItemGroup(placement: .navigationBarTrailing) {
+          Button {
+            viewModel.triggerNow()
+          } label: {
+            if viewModel.isRunning {
+              ProgressView()
+                .scaleEffect(0.8)
+            } else {
+              Image(systemName: "bolt.fill")
+                .foregroundColor(.purple)
+            }
+          }
+          .disabled(viewModel.isRunning)
+
           Button { showSettings = true } label: {
             Image(systemName: "gearshape")
           }

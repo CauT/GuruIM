@@ -11,6 +11,7 @@ public class AutoInsightViewModel: ObservableObject {
 
   @Published public var results: [AutoInsightResult] = []
   @Published public var unreadCount: Int = 0
+  @Published public var isRunning: Bool = false
 
   // MARK: - Config (live editing)
 
@@ -72,6 +73,16 @@ public class AutoInsightViewModel: ObservableObject {
 
   public func apiKey(for provider: AIProvider) -> String {
     aiService.apiKey(for: provider)
+  }
+
+  public func triggerNow() {
+    guard !isRunning else { return }
+    isRunning = true
+    Task {
+      await service.runNow()
+      reload()
+      isRunning = false
+    }
   }
 
   public func deleteResult(_ result: AutoInsightResult) {
