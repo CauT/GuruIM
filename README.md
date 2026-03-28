@@ -1,4 +1,8 @@
-# 咕噜输入法
+# GuruIM / 咕噜输入法
+
+> **GuruIM captures all your input history — keystrokes, clipboard, and context — and lets you export it to any LLM, on your terms. Feed yourself to AI, willingly.**
+>
+> **GuruIM 采集你的全部输入记录——键盘上屏、剪贴板、上下文——在你的完全控制下导出给任意 LLM 大模型。我愿以身饲 AI。**
 
 基于 [RIME 中州韻輸入法引擎](https://github.com/rime/librime) 的 iOS 输入法，在完整保留 RIME 生态的基础上，集成了 AI 驱动的个人数据洞察与智能调频能力。
 
@@ -20,6 +24,7 @@
 - [第三方库](#第三方库)
 - [许可证](#许可证)
 - [致谢](#致谢)
+- [联系](#联系)
 
 ---
 
@@ -169,3 +174,12 @@ Hamster/
 - TF 版本交流群中 @一梦浮生、@CZ36P9z9 等伙伴的测试反馈
 - @王牌饼干 为输入法制作的工具
 - @amorphobia 为 LibrimeKit 提交的 GitHub Action 配置
+
+---
+
+## 联系
+
+如有建议、反馈或合作意向，欢迎通过以下方式联系：
+
+- Email: [donglingyongadls@gmail.com](mailto:donglingyongadls@gmail.com)
+- GitHub Issues: [提交 Issue](../../issues)
