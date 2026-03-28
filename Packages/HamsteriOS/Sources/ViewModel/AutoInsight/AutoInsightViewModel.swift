@@ -15,7 +15,7 @@ public class AutoInsightViewModel: ObservableObject {
   // MARK: - Config (live editing)
 
   @Published public var isEnabled: Bool = false
-  @Published public var intervalHours: Int = 24
+  @Published public var intervalMinutes: Int = 24 * 60
   @Published public var personalBackground: String = ""
   @Published public var spiritualPrompt: String = AutoInsightService.defaultSpiritualPrompt
   @Published public var taskPrompt: String = AutoInsightService.defaultTaskPrompt
@@ -36,7 +36,7 @@ public class AutoInsightViewModel: ObservableObject {
     unreadCount = service.unreadCount
     let cfg = service.config
     isEnabled = cfg.isEnabled
-    intervalHours = cfg.intervalHours
+    intervalMinutes = cfg.intervalMinutes
     personalBackground = cfg.personalBackground
     spiritualPrompt = cfg.spiritualPrompt.isEmpty ? AutoInsightService.defaultSpiritualPrompt : cfg.spiritualPrompt
     taskPrompt = cfg.taskPrompt.isEmpty ? AutoInsightService.defaultTaskPrompt : cfg.taskPrompt
@@ -45,7 +45,7 @@ public class AutoInsightViewModel: ObservableObject {
   public func saveConfig() {
     var cfg = service.config
     cfg.isEnabled = isEnabled
-    cfg.intervalHours = intervalHours
+    cfg.intervalMinutes = intervalMinutes
     cfg.personalBackground = personalBackground
     cfg.spiritualPrompt = spiritualPrompt
     cfg.taskPrompt = taskPrompt

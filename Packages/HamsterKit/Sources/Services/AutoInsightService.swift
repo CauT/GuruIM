@@ -5,8 +5,8 @@ import UserNotifications
 /// 每日洞察配置
 public struct AutoInsightConfig: Codable {
   public var isEnabled: Bool
-  /// 两次分析之间最小间隔（小时）
-  public var intervalHours: Int
+  /// 两次分析之间最小间隔（分钟）
+  public var intervalMinutes: Int
   /// 个人背景信息（可选，传入 prompt）
   public var personalBackground: String
   /// 心灵安慰 Prompt 模板
@@ -18,14 +18,14 @@ public struct AutoInsightConfig: Codable {
 
   public init(
     isEnabled: Bool = false,
-    intervalHours: Int = 24,
+    intervalMinutes: Int = 24 * 60,
     personalBackground: String = "",
     spiritualPrompt: String = AutoInsightService.defaultSpiritualPrompt,
     taskPrompt: String = AutoInsightService.defaultTaskPrompt,
     lastRunDate: Date? = nil
   ) {
     self.isEnabled = isEnabled
-    self.intervalHours = intervalHours
+    self.intervalMinutes = intervalMinutes
     self.personalBackground = personalBackground
     self.spiritualPrompt = spiritualPrompt
     self.taskPrompt = taskPrompt
@@ -118,7 +118,7 @@ public class AutoInsightService {
     guard !AIService.shared.apiKey(for: provider).isEmpty else { return false }
     // 检查时间间隔
     guard let lastRun = cfg.lastRunDate else { return true }
-    let minInterval = TimeInterval(cfg.intervalHours * 3600)
+    let minInterval = TimeInterval(cfg.intervalMinutes * 60)
     return Date().timeIntervalSince(lastRun) >= minInterval
   }
 
@@ -137,9 +137,9 @@ public class AutoInsightService {
 
   private func run() async {
     let cfg = config
-    let guruText = loadGURUText(sinceHours: cfg.intervalHours)
+    let guruText = loadGURUText(sinceMinutes: cfg.intervalMinutes)
     guard !guruText.isEmpty else {
-      logger.info("AutoInsight: no GURU data in the past \(cfg.intervalHours)h, skipping")
+      logger.info("AutoInsight: no GURU data in the past \(cfg.intervalMinutes)min, skipping")
       return
     }
 
@@ -185,8 +185,8 @@ public class AutoInsightService {
 
   // MARK: - Data Loading
 
-  private func loadGURUText(sinceHours hours: Int) -> String {
-    let since = Date().addingTimeInterval(TimeInterval(-hours * 3600))
+  private func loadGURUText(sinceMinutes minutes: Int) -> String {
+    let since = Date().addingTimeInterval(TimeInterval(-minutes * 60))
     let calendar = Calendar.current
     var lines: [String] = []
 

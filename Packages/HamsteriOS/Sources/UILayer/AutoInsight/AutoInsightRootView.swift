@@ -303,8 +303,9 @@ public struct AutoInsightSettingsView: View {
   @ObservedObject var viewModel: AutoInsightViewModel
   @Environment(\.dismiss) private var dismiss
 
+  // DEBUG: 5m 选项仅用于测试，上线前移除
   private let intervalOptions: [(String, Int)] = [
-    ("12小时", 12), ("24小时", 24), ("48小时", 48), ("72小时", 72)
+    ("5分钟", 5), ("12小时", 12 * 60), ("24小时", 24 * 60), ("48小时", 48 * 60), ("72小时", 72 * 60)
   ]
 
   public var body: some View {
@@ -365,7 +366,7 @@ public struct AutoInsightSettingsView: View {
 
         // 间隔
         Section("分析间隔") {
-          Picker("间隔", selection: $viewModel.intervalHours) {
+          Picker("间隔", selection: $viewModel.intervalMinutes) {
             ForEach(intervalOptions, id: \.1) { label, hours in
               Text(label).tag(hours)
             }
