@@ -73,9 +73,6 @@ struct LogRootView: View {
         } label: {
           Image(systemName: "square.and.arrow.up")
         }
-        .sheet(isPresented: $showShareSheet) {
-          LogShareSheet(text: LogService.shared.exportText())
-        }
 
         // 清除
         Button(role: .destructive) {
@@ -85,6 +82,9 @@ struct LogRootView: View {
           Image(systemName: "trash")
         }
       }
+    }
+    .sheet(isPresented: $showShareSheet) {
+      LogShareSheet(text: LogService.shared.exportText())
     }
     .onAppear { reload() }
   }
