@@ -59,6 +59,18 @@ public struct AIMessage: Codable {
   }
 }
 
+/// AI Token 用量
+public struct AIUsage: Codable {
+  public let inputTokens: Int
+  public let outputTokens: Int
+  public var totalTokens: Int { inputTokens + outputTokens }
+
+  public init(inputTokens: Int, outputTokens: Int) {
+    self.inputTokens = inputTokens
+    self.outputTokens = outputTokens
+  }
+}
+
 /// AI 服务 - 统一封装 OpenAI / OpenRouter / Claude API
 public class AIService {
   public static let shared = AIService()
@@ -138,6 +150,16 @@ public class AIService {
     messages: [AIMessage],
     completion: @escaping (Result<String, Error>) -> Void
   ) {
+    chatWithUsage(messages: messages) { result in
+      completion(result.map { $0.0 })
+    }
+  }
+
+  /// 发送消息并返回 token 用量
+  public func chatWithUsage(
+    messages: [AIMessage],
+    completion: @escaping (Result<(String, AIUsage?), Error>) -> Void
+  ) {
     let provider = selectedProvider
     let key = apiKey(for: provider)
     guard !key.isEmpty else {
@@ -146,19 +168,19 @@ public class AIService {
     }
     switch provider {
     case .claude:
-      chatClaude(messages: messages, apiKey: key, completion: completion)
+      chatClaudeWithUsage(messages: messages, apiKey: key, completion: completion)
     default:
-      chatOpenAICompat(messages: messages, provider: provider, apiKey: key, completion: completion)
+      chatOpenAICompatWithUsage(messages: messages, provider: provider, apiKey: key, completion: completion)
     }
   }
 
   // MARK: - OpenAI-compatible (OpenAI + OpenRouter)
 
-  private func chatOpenAICompat(
+  private func chatOpenAICompatWithUsage(
     messages: [AIMessage],
     provider: AIProvider,
     apiKey: String,
-    completion: @escaping (Result<String, Error>) -> Void
+    completion: @escaping (Result<(String, AIUsage?), Error>) -> Void
   ) {
     let url = URL(string: "\(provider.baseURL)/chat/completions")!
     var req = URLRequest(url: url)
@@ -180,7 +202,6 @@ public class AIService {
       guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
         DispatchQueue.main.async { completion(.failure(AIError.parseError)) }; return
       }
-      // 错误响应
       if let errObj = json["error"] as? [String: Any], let msg = errObj["message"] as? String {
         DispatchQueue.main.async { completion(.failure(AIError.apiError(msg))) }; return
       }
@@ -190,16 +211,22 @@ public class AIService {
       else {
         DispatchQueue.main.async { completion(.failure(AIError.parseError)) }; return
       }
-      DispatchQueue.main.async { completion(.success(content)) }
+      var usage: AIUsage?
+      if let usageObj = json["usage"] as? [String: Any] {
+        let input = usageObj["prompt_tokens"] as? Int ?? 0
+        let output = usageObj["completion_tokens"] as? Int ?? 0
+        usage = AIUsage(inputTokens: input, outputTokens: output)
+      }
+      DispatchQueue.main.async { completion(.success((content, usage))) }
     }.resume()
   }
 
   // MARK: - Claude (Anthropic Messages API)
 
-  private func chatClaude(
+  private func chatClaudeWithUsage(
     messages: [AIMessage],
     apiKey: String,
-    completion: @escaping (Result<String, Error>) -> Void
+    completion: @escaping (Result<(String, AIUsage?), Error>) -> Void
   ) {
     let url = URL(string: "https://api.anthropic.com/v1/messages")!
     var req = URLRequest(url: url)
@@ -208,7 +235,6 @@ public class AIService {
     req.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
     req.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-    // Claude API 将 system 消息单独处理
     let systemMsg = messages.first(where: { $0.role == "system" })?.content
     let chatMsgs = messages.filter { $0.role != "system" }
 
@@ -234,7 +260,13 @@ public class AIService {
       else {
         DispatchQueue.main.async { completion(.failure(AIError.parseError)) }; return
       }
-      DispatchQueue.main.async { completion(.success(text)) }
+      var usage: AIUsage?
+      if let usageObj = json["usage"] as? [String: Any] {
+        let input = usageObj["input_tokens"] as? Int ?? 0
+        let output = usageObj["output_tokens"] as? Int ?? 0
+        usage = AIUsage(inputTokens: input, outputTokens: output)
+      }
+      DispatchQueue.main.async { completion(.success((text, usage))) }
     }.resume()
   }
 

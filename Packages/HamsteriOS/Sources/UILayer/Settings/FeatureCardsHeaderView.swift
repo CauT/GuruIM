@@ -1,9 +1,10 @@
 import UIKit
 
-/// 设置页顶部核心功能卡片区：Now Guru + 每日洞察
+/// 设置页顶部核心功能卡片区：Now Guru + 每日洞察 + 智能调频
 final class FeatureCardsHeaderView: UIView {
   var guruAction: (() -> Void)?
   var autoInsightAction: (() -> Void)?
+  var smartFreqAction: (() -> Void)?
 
   // MARK: - Subviews
 
@@ -34,6 +35,15 @@ final class FeatureCardsHeaderView: UIView {
     subtitle: "心灵陪伴 · 事务指导 · AI 分析"
   )
 
+  private lazy var smartFreqCard: UIView = makeCard(
+    icon: "bolt.fill",
+    iconColor: .systemCyan,
+    cardColor: UIColor.systemCyan.withAlphaComponent(0.10),
+    borderColor: UIColor.systemCyan.withAlphaComponent(0.22),
+    title: "智能调频",
+    subtitle: "自动优化 · 词频调整 · 新词发现"
+  )
+
   // MARK: - Init
 
   override init(frame: CGRect) {
@@ -59,6 +69,7 @@ final class FeatureCardsHeaderView: UIView {
   private func setup() {
     cardStack.addArrangedSubview(guruCard)
     cardStack.addArrangedSubview(autoInsightCard)
+    cardStack.addArrangedSubview(smartFreqCard)
     addSubview(sectionLabel)
     addSubview(cardStack)
 
@@ -76,6 +87,7 @@ final class FeatureCardsHeaderView: UIView {
 
     addTapGesture(to: guruCard, selector: #selector(guruTapped))
     addTapGesture(to: autoInsightCard, selector: #selector(autoInsightTapped))
+    addTapGesture(to: smartFreqCard, selector: #selector(smartFreqTapped))
   }
 
   private func addTapGesture(to view: UIView, selector: Selector) {
@@ -91,6 +103,10 @@ final class FeatureCardsHeaderView: UIView {
 
   @objc private func autoInsightTapped() {
     bounce(autoInsightCard) { [weak self] in self?.autoInsightAction?() }
+  }
+
+  @objc private func smartFreqTapped() {
+    bounce(smartFreqCard) { [weak self] in self?.smartFreqAction?() }
   }
 
   private func bounce(_ view: UIView, completion: @escaping () -> Void) {

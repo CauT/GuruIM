@@ -47,6 +47,7 @@ public class SettingsViewModel: ObservableObject {
   func navigateToGuru() { mainViewModel.subViewSubject.send(.guru) }
   func navigateToICloud() { mainViewModel.subViewSubject.send(.iCloud) }
   func navigateToAutoInsight() { mainViewModel.subViewSubject.send(.autoInsight) }
+  func navigateToSmartFreq() { mainViewModel.subViewSubject.send(.smartFreq) }
   func navigateToInputMethodSettings() { mainViewModel.subViewSubject.send(.inputMethodSettings) }
 
   var tableReloadSubject = PassthroughSubject<Bool, Never>()

@@ -32,6 +32,7 @@ public class SettingsRootView: NibLessView {
     let header = FeatureCardsHeaderView()
     header.guruAction = { [unowned self] in settingsViewModel.navigateToGuru() }
     header.autoInsightAction = { [unowned self] in settingsViewModel.navigateToAutoInsight() }
+    header.smartFreqAction = { [unowned self] in settingsViewModel.navigateToSmartFreq() }
     return header
   }()
 

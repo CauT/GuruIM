@@ -23,6 +23,7 @@ protocol SubViewControllerFactory {
   func makeRimeViewController() -> RimeViewController
   func makeGURUViewController() -> GURUViewController
   func makeAutoInsightViewController() -> AutoInsightViewController
+  func makeSmartFreqViewController() -> SmartFreqViewController
   func makeInputMethodSettingsViewController() -> InputMethodSettingsViewController
 }
 
@@ -63,6 +64,9 @@ open class MainViewController: UISplitViewController {
 
   private lazy var autoInsightViewController: AutoInsightViewController
     = subViewControllerFactory.makeAutoInsightViewController()
+
+  private lazy var smartFreqViewController: SmartFreqViewController
+    = subViewControllerFactory.makeSmartFreqViewController()
 
   private lazy var inputMethodSettingsViewController: InputMethodSettingsViewController
     = subViewControllerFactory.makeInputMethodSettingsViewController()
@@ -173,6 +177,8 @@ extension MainViewController {
       presentGURUViewController()
     case .autoInsight:
       presentAutoInsightViewController()
+    case .smartFreq:
+      presentSmartFreqViewController()
     case .inputMethodSettings:
       presentInputMethodSettingsViewController()
     case .about:
@@ -230,6 +236,10 @@ extension MainViewController {
 
   func presentAutoInsightViewController() {
     presentViewController(autoInsightViewController)
+  }
+
+  func presentSmartFreqViewController() {
+    presentViewController(smartFreqViewController)
   }
 
   func presentInputMethodSettingsViewController() {

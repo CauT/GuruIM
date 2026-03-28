@@ -49,6 +49,9 @@ public enum SettingsSubView: String {
   /// 每日洞察页面
   case autoInsight
 
+  /// 智能调频页面
+  case smartFreq
+
   /// 输入法设置汇总页面
   case inputMethodSettings
 

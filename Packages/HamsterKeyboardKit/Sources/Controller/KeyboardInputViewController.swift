@@ -71,6 +71,11 @@ open class KeyboardInputViewController: UIInputViewController, KeyboardControlle
       Task.detached(priority: .background) {
         await AutoInsightService.shared.runIfNeeded()
       }
+
+      // 智能调频：满足间隔条件时后台触发 AI 分析
+      Task.detached(priority: .background) {
+        await SmartFreqService.shared.runIfNeeded()
+      }
     }
 
     // fix: 屏幕边缘按键触摸延迟

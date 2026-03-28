@@ -354,6 +354,10 @@ extension HamsterAppDependencyContainer: SubViewControllerFactory {
     return AutoInsightViewController()
   }
 
+  func makeSmartFreqViewController() -> SmartFreqViewController {
+    return SmartFreqViewController()
+  }
+
   func makeInputMethodSettingsViewController() -> InputMethodSettingsViewController {
     return InputMethodSettingsViewController(
       mainViewModel: mainViewModel,
