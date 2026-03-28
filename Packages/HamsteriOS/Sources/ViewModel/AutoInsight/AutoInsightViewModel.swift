@@ -51,6 +51,9 @@ public class AutoInsightViewModel: ObservableObject {
     cfg.spiritualPrompt = spiritualPrompt
     cfg.taskPrompt = taskPrompt
     service.config = cfg
+    if isEnabled {
+      Task { await service.requestNotificationPermissionIfNeeded() }
+    }
   }
 
   // MARK: - AI Config

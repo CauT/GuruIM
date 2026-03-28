@@ -275,13 +275,41 @@ public class AutoInsightService {
 
   // MARK: - Notification
 
+  /// 请求通知权限（首次启用时调用）
+  public func requestNotificationPermissionIfNeeded() async {
+    let center = UNUserNotificationCenter.current()
+    let settings = await center.notificationSettings()
+    guard settings.authorizationStatus == .notDetermined else { return }
+    let log = LogService.shared
+    do {
+      let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
+      log.log("通知权限请求结果：\(granted ? "已授权" : "已拒绝")", tag: "AutoInsight")
+    } catch {
+      log.log("通知权限请求失败：\(error.localizedDescription)", level: .error, tag: "AutoInsight")
+    }
+  }
+
   private func scheduleNotification() async {
     let center = UNUserNotificationCenter.current()
+    let log = LogService.shared
 
-    // 检查权限
-    let settings = await center.notificationSettings()
+    // 若未决定则先请求权限
+    var settings = await center.notificationSettings()
+    if settings.authorizationStatus == .notDetermined {
+      do {
+        let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
+        log.log("通知权限请求结果：\(granted ? "已授权" : "已拒绝")", tag: "AutoInsight")
+      } catch {
+        log.log("通知权限请求失败：\(error.localizedDescription)", level: .error, tag: "AutoInsight")
+      }
+      settings = await center.notificationSettings()
+    }
+
     guard settings.authorizationStatus == .authorized ||
-          settings.authorizationStatus == .provisional else { return }
+          settings.authorizationStatus == .provisional else {
+      log.log("通知未发送：权限状态 \(settings.authorizationStatus.rawValue)（需在系统设置中开启）", level: .warn, tag: "AutoInsight")
+      return
+    }
 
     let content = UNMutableNotificationContent()
     content.title = "你的每日洞察已生成 ✦"
